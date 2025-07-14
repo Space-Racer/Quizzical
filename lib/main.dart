@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:my_spinner_quiz_app/auth_screen.dart';
 import 'package:my_spinner_quiz_app/app_theme.dart';
 import 'package:my_spinner_quiz_app/app_navigation.dart'; // Assuming this exists for navigation after login
+import 'package:firebase_core/firebase_core.dart';
+import 'package:my_spinner_quiz_app/firebase_options.dart';
 
 // Global variables related to Canvas environment (kept as placeholders but not used for Firebase)
 // DO NOT modify these. They are injected at runtime.
@@ -10,8 +12,9 @@ import 'package:my_spinner_quiz_app/app_navigation.dart'; // Assuming this exist
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // All Firebase initialization and error handling removed for now
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 

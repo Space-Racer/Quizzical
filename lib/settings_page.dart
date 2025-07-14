@@ -2,6 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:my_spinner_quiz_app/app_theme.dart'; // Import app theme for colors
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:my_spinner_quiz_app/auth_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -14,16 +17,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Controllers for text input fields
   final TextEditingController _timerDurationController = TextEditingController(text: '10');
   final TextEditingController _userNameController = TextEditingController(text: 'PlayerOne');
-  final TextEditingController _profilePictureUrlController = TextEditingController(text: 'https://via.placeholder.com/50/F72585/FFFFFF?text=JP');
-
   // State for the confetti toggle
   bool _confettiEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserSettings();
+  }
+
+  void _loadUserSettings() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('artifacts')
+          .doc('my-trivia-app-id')
+          .collection('users')
+          .doc(user.uid)
+          .collection('profile')
+          .doc('data')
+          .get();
+      if (doc.exists) {
+        final data = doc.data();
+        setState(() {
+          _userNameController.text = data?['displayName'] ?? '';
+          _timerDurationController.text = (data?['timerDuration'] ?? 10).toString();
+          _confettiEnabled = data?['confettiEnabled'] ?? true;
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
     _timerDurationController.dispose();
     _userNameController.dispose();
-    _profilePictureUrlController.dispose();
     super.dispose();
   }
 
@@ -41,34 +69,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Simulated save functions
-  void _saveTimerSettings() {
-    final int? newDuration = int.tryParse(_timerDurationController.text);
-    if (newDuration != null && newDuration >= 5 && newDuration <= 60) {
-      print('Timer duration set to $newDuration seconds!');
-      _showSnackBar('Timer duration saved!');
-      // In a real app, you would save this to a persistent storage (e.g., Firestore, SharedPreferences)
-    } else {
-      _showSnackBar('Please enter a valid duration (5-60 seconds).', isError: true);
+  void _saveTimerSettings() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final int? newDuration = int.tryParse(_timerDurationController.text);
+      if (newDuration != null && newDuration >= 5 && newDuration <= 60) {
+        await FirebaseFirestore.instance
+            .collection('artifacts')
+            .doc('my-trivia-app-id')
+            .collection('users')
+            .doc(user.uid)
+            .collection('profile')
+            .doc('data')
+            .update({'timerDuration': newDuration});
+        _showSnackBar('Timer duration saved!');
+      } else {
+        _showSnackBar('Please enter a valid duration (5-60 seconds).', isError: true);
+      }
     }
   }
 
-  void _saveProfileSettings() {
-    final String userName = _userNameController.text.trim();
-    final String profilePicUrl = _profilePictureUrlController.text.trim();
-    if (userName.isNotEmpty) {
-      print('User Name: $userName, Profile Pic URL: $profilePicUrl');
-      _showSnackBar('Profile settings saved!');
-      // In a real app, update user profile in Firebase/Firestore
-    } else {
-      _showSnackBar('User Name cannot be empty.', isError: true);
+  void _saveProfileSettings() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final String userName = _userNameController.text.trim();
+      if (userName.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('artifacts')
+            .doc('my-trivia-app-id')
+            .collection('users')
+            .doc(user.uid)
+            .collection('profile')
+            .doc('data')
+            .update({'displayName': userName});
+        _showSnackBar('Profile settings saved!');
+      } else {
+        _showSnackBar('User Name cannot be empty.', isError: true);
+      }
     }
   }
 
-  void _saveVisualSettings() {
-    print('Confetti enabled: $_confettiEnabled');
-    _showSnackBar('Visual settings saved!');
-    // In a real app, save this preference
+  void _saveVisualSettings() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection('artifacts')
+          .doc('my-trivia-app-id')
+          .collection('users')
+          .doc(user.uid)
+          .collection('profile')
+          .doc('data')
+          .update({'confettiEnabled': _confettiEnabled});
+      _showSnackBar('Visual settings saved!');
+    }
   }
 
   @override
@@ -185,28 +238,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, color: AppColors.textDark),
                           ),
                           SizedBox(height: isMobile ? 15 : 20),
-                          Text(
-                            'Profile Picture URL:',
-                            style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w600, color: AppColors.primaryBlue),
-                          ),
-                          SizedBox(height: isMobile ? 8 : 10),
-                          TextFormField(
-                            controller: _profilePictureUrlController,
-                            decoration: InputDecoration(
-                              hintText: 'e.g., https://via.placeholder.com/...',
-                              border: OutlineInputBorder(
-                                borderRadius: AppBorderRadius.small,
-                                borderSide: BorderSide(color: AppColors.secondaryPurple),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: AppBorderRadius.small,
-                                borderSide: BorderSide(color: AppColors.accentPink, width: 2),
-                              ),
-                              contentPadding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 15, horizontal: 15),
-                            ),
-                            style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, color: AppColors.textDark),
-                          ),
-                          SizedBox(height: isMobile ? 15 : 20),
                           _buildSaveButton(
                             context,
                             text: 'Save Profile',
@@ -250,6 +281,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       SizedBox(height: isMobile ? 20 : 30), // Extra space at bottom
+
+                      // Logout Button
+                      ElevatedButton(
+                        onPressed: () async {
+                          await FirebaseAuth.instance.signOut();
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (context) => const AuthScreen()),
+                                (Route<dynamic> route) => false,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accentRed,
+                          foregroundColor: AppColors.textLight,
+                          padding: EdgeInsets.symmetric(horizontal: isMobile ? 25 : 35, vertical: isMobile ? 12 : 15),
+                          shape: RoundedRectangleBorder(borderRadius: AppBorderRadius.small),
+                          elevation: 5,
+                          shadowColor: Colors.black.withOpacity(0.15),
+                        ),
+                        child: Text(
+                          'Logout',
+                          style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ],
                   ),
                 ),

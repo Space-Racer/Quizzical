@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math'; // Still needed for random question selection
 import 'dart:async'; // Still needed for game timer
-// Removed Firebase imports:
-// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import for Google Fonts
 // import 'package:confetti/confetti.dart'; // Keep if you want confetti
 // import 'package:just_audio/just_audio.dart'; // Keep if you want sound effects
@@ -42,7 +42,14 @@ class Question {
     required this.correctAnswer,
   });
 
-// Removed factory Question.fromFirestore as Firebase is no longer used here
+  factory Question.fromFirestore(DocumentSnapshot doc) {
+    Map data = doc.data() as Map<String, dynamic>;
+    return Question(
+      questionText: data['questionText'] ?? '',
+      answers: List<String>.from(data['options'] ?? []),
+      correctAnswer: data['correctAnswer'] ?? '',
+    );
+  }
 }
 
 class SpinnerQuizPage extends StatefulWidget { // Renaming this to QuizPage might be better, but keeping for now
@@ -59,6 +66,7 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
   String? _selectedAnswer;
   bool _answerSubmitted = false;
   int _currentQuestionIndex = 0; // To track current question for "Next" logic
+  String _displayName = 'Player';
 
   Timer? _gameTimer;
   int _timeLeftInSeconds = 10; // Changed to 10 seconds as per HTML mockup timer
@@ -80,6 +88,7 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
     // _incorrectAudioPlayer = AudioPlayer();
     // _loadAudio(); // Uncomment if using audio
 
+    _loadUserData();
     _fetchQuestions();
   }
 
@@ -109,45 +118,62 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
     });
   }
 
-  // Modified to use hardcoded questions
+  Future<void> _loadUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('artifacts')
+          .doc('my-trivia-app-id')
+          .collection('users')
+          .doc(user.uid)
+          .collection('profile')
+          .doc('data')
+          .get();
+      if (doc.exists) {
+        setState(() {
+          _displayName = doc.data()?['displayName'] ?? 'Player';
+        });
+      }
+    }
+  }
+
   Future<void> _fetchQuestions() async {
     setState(() {
       _isLoadingQuestions = true;
       _currentQuestion = null;
       _selectedAnswer = null;
       _answerSubmitted = false;
-      _currentQuestionIndex = 0; // Reset question index
-      _gameEnded = false; // Ensure game is not marked as ended
+      _currentQuestionIndex = 0;
+      _gameEnded = false;
     });
 
-    // Simulate fetching questions with a delay
-    await Future.delayed(const Duration(seconds: 1));
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('artifacts')
+          .doc('my-trivia-app-id')
+          .collection('users')
+          .doc(user.uid)
+          .collection('questions')
+          .get();
+      _allQuestions = snapshot.docs.map((doc) => Question.fromFirestore(doc)).toList();
+    }
 
-    _allQuestions = [
-      Question(
-        questionText: "What is the capital of France?",
-        answers: ["London", "Berlin", "Paris", "Rome"],
-        correctAnswer: "Paris",
-      ),
-      Question(
-        questionText: "Which planet is known as the Red Planet?",
-        answers: ["Earth", "Mars", "Jupiter", "Venus"],
-        correctAnswer: "Mars",
-      ),
-      Question(
-        questionText: "What is the largest mammal in the world?",
-        answers: ["Elephant", "Blue Whale", "Great White Shark", "Giraffe"],
-        correctAnswer: "Blue Whale",
-      ),
-      Question(
-        questionText: "What is the chemical symbol for Gold?",
-        answers: ["Au", "Ag", "Fe", "Cu"],
-        correctAnswer: "Au",
-      ),
-    ];
+    if (_allQuestions.isEmpty) {
+      // Handle case where user has no questions
+      setState(() {
+        _isLoadingQuestions = false;
+        _currentQuestion = Question(
+          questionText: "No questions available. Add some in the settings!",
+          answers: [],
+          correctAnswer: "",
+        );
+      });
+      return;
+    }
 
-    _allQuestions.shuffle(); // Shuffle all questions once
-    _loadNextQuestion(); // Load the first question
+    _allQuestions.shuffle();
+    _loadNextQuestion();
     _startTimer();
 
     setState(() {
@@ -241,10 +267,23 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
       _timeLeftInSeconds = 10; // Reset timer display
     });
     _gameTimer?.cancel();
+    _loadUserData();
     _fetchQuestions();
   }
 
   void _showGameEndDialog() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      FirebaseFirestore.instance
+          .collection('artifacts')
+          .doc('my-trivia-app-id')
+          .collection('users')
+          .doc(user.uid)
+          .collection('profile')
+          .doc('data')
+          .update({'score': FieldValue.increment(_score)});
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -379,14 +418,14 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
                                 ),
                                 child: Center(
                                   child: Text(
-                                    'JP', // Placeholder for user initials
+                                    _displayName.isNotEmpty ? _displayName[0].toUpperCase() : 'P',
                                     style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: accentPink),
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                'Hi, PlayerOne!', // Placeholder for user name
+                                'Hi, $_displayName!',
                                 style: GoogleFonts.poppins(fontSize: 18, color: primaryPurpleDark, fontWeight: FontWeight.w600),
                               ),
                             ],

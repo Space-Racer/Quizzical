@@ -3,19 +3,10 @@ import 'package:flutter/material.dart';
 // Re-enabled Firebase imports
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart'; // Added for Firebase.initializeApp()
 import 'package:google_fonts/google_fonts.dart';
 import 'package:my_spinner_quiz_app/app_navigation.dart'; // Assuming this exists
 import 'package:my_spinner_quiz_app/background_painter.dart'; // Import the background painter
 import 'package:my_spinner_quiz_app/app_theme.dart'; // Import app theme for colors
-import 'dart:convert'; // For JSON decoding of firebaseConfig
-
-// Define global variables for Firebase configuration (provided by Canvas environment)
-// These variables are expected to be available in the Flutter web environment.
-// For local development, you might need to mock them or provide actual values.
-const String __app_id = String.fromEnvironment('APP_ID', defaultValue: 'default-app-id');
-const String __firebase_config = String.fromEnvironment('FIREBASE_CONFIG', defaultValue: '{}');
-const String __initial_auth_token = String.fromEnvironment('INITIAL_AUTH_TOKEN', defaultValue: '');
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -35,9 +26,8 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false; // Re-enabled _isLoading for async operations
 
   // Firebase instances
-  late final FirebaseAuth _auth;
-  late final FirebaseFirestore _firestore;
-  late final String _appId;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? _userId; // To store the current user's UID
 
   @override
@@ -49,32 +39,6 @@ class _AuthScreenState extends State<AuthScreen> {
   // Initializes Firebase and sets up authentication listener
   void _initializeFirebase() async {
     try {
-      // Parse the Firebase config JSON string
-      final Map<String, dynamic> firebaseConfig = jsonDecode(__firebase_config);
-
-      // Initialize Firebase App
-      // This is crucial for web/Canvas environments to ensure Firebase SDK is ready.
-      // If Firebase is already initialized globally (e.g., in main.dart),
-      // this call might not be strictly necessary here, but it's safer to include
-      // it or ensure `Firebase.initializeApp()` is called once at app startup.
-      // For Canvas, we assume it might not be initialized elsewhere.
-      await Firebase.initializeApp(
-        options: FirebaseOptions(
-          apiKey: firebaseConfig['apiKey'] ?? '', // Provide default empty string if null
-          appId: firebaseConfig['appId'] ?? '', // Provide default empty string if null
-          messagingSenderId: firebaseConfig['messagingSenderId'] ?? '', // Provide default empty string if null
-          projectId: firebaseConfig['projectId'] ?? '', // Provide default empty string if null
-          authDomain: firebaseConfig['authDomain'] ?? '', // Provide default empty string if null
-          databaseURL: firebaseConfig['databaseURL'] ?? '', // Provide default empty string if null
-          storageBucket: firebaseConfig['storageBucket'] ?? '', // Provide default empty string if null
-          measurementId: firebaseConfig['measurementId'] ?? '', // Provide default empty string if null
-        ),
-      );
-
-      _auth = FirebaseAuth.instance;
-      _firestore = FirebaseFirestore.instance;
-      _appId = __app_id; // Get the app ID from the environment
-
       // Listen to authentication state changes
       _auth.authStateChanges().listen((user) async {
         if (!mounted) return; // Ensure widget is still in the tree
@@ -92,26 +56,10 @@ class _AuthScreenState extends State<AuthScreen> {
           );
         }
       });
-
-      // Attempt to sign in with custom token if provided (for Canvas environment)
-      if (__initial_auth_token.isNotEmpty) {
-        await _auth.signInWithCustomToken(__initial_auth_token);
-        print('Signed in with custom token.');
-      } else {
-        // If no custom token, sign in anonymously to ensure a user ID is available
-        // for Firestore rules that require `request.auth != null`.
-        await _auth.signInAnonymously();
-        print('Signed in anonymously.');
-      }
-    } on FirebaseException catch (e) {
-      print('Firebase initialization error: ${e.code} - ${e.message}');
-      if (mounted) {
-        _showSnackBar('Failed to initialize Firebase: ${e.message}', isError: true);
-      }
     } catch (e) {
-      print('Error initializing Firebase: $e');
+      print('Error initializing Firebase auth listener: $e');
       if (mounted) {
-        _showSnackBar('Failed to initialize authentication: $e', isError: true);
+        _showSnackBar('Failed to set up authentication listener: $e', isError: true);
       }
     }
   }
@@ -173,7 +121,7 @@ class _AuthScreenState extends State<AuthScreen> {
         // Store user profile data in Firestore
         await _firestore
             .collection('artifacts')
-            .doc(_appId)
+            .doc('my-trivia-app-id') // Replace with your actual App ID
             .collection('users')
             .doc(newUserUid)
             .collection('profile')
