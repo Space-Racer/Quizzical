@@ -1,0 +1,36 @@
+name: my_spinner_quiz_app
+description: A fun spinner quiz app for the web.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0' # Ensures compatibility with the latest Dart SDK
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  font_awesome_flutter: ^10.7.0
+  firebase_core: # For Firebase initialization
+  cloud_firestore:
+  firebase_auth: # For Firestore database access
+  flutter_fortune_wheel: # For a more advanced spinner
+  google_fonts: # Add this for custom fonts
+  confetti: # Add this for confetti animation
+  just_audio:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+  # To add assets like images or fonts:
+  # assets:
+  #   - assets/images/
+  # fonts:
+  #   - family: Pacifico
+  #     fonts:
+  #       - asset: fonts/Pacifico-Regular.ttf
