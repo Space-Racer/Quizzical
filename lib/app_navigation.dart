@@ -1,9 +1,10 @@
 // lib/app_navigation.dart
 import 'package:flutter/material.dart';
-import 'package:my_spinner_quiz_app/quiz_game.dart'; // Import your existing quiz game page
-import 'package:my_spinner_quiz_app/add_question_page.dart'; // Import the new add question page
-import 'package:my_spinner_quiz_app/settings_page.dart'; // Import the new settings page
+import 'package:quizzical/quiz_game.dart'; // Import your existing quiz game page
+import 'package:quizzical/add_question_page.dart'; // Import the new add question page
+import 'package:quizzical/settings_page.dart'; // Import the new settings page
 import 'package:google_fonts/google_fonts.dart'; // NEW: Import google_fonts for custom text styles
+import 'package:google_nav_bar/google_nav_bar.dart';
 
 class AppNavigationScreen extends StatefulWidget {
   const AppNavigationScreen({super.key});
@@ -58,48 +59,52 @@ class _AppNavigationScreenState extends State<AppNavigationScreen> {
         ),
       ),
       // Bottom navigation bar
-      bottomNavigationBar: Container( // Wrap BottomNavigationBar in a Container for shadow
+      bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: cardBackground, // Use the card background color for the nav bar
+          color: cardBackground,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15), // --shadow-light from HTML
-              blurRadius: 10,
-              offset: const Offset(0, -5), // Shadow pointing upwards
-            ),
+              blurRadius: 20,
+              color: Colors.black.withOpacity(.1),
+            )
           ],
-          borderRadius: const BorderRadius.only( // Optional: rounded top corners for nav bar
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
         ),
-        child: BottomNavigationBar(
-          items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.casino), // Icon for the spinner game
-              label: 'Play',
-              backgroundColor: cardBackground, // Ensure item background matches container
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
+            child: GNav(
+              rippleColor: Colors.grey[300]!,
+              hoverColor: Colors.grey[100]!,
+              gap: 8,
+              activeColor: accentPink,
+              iconSize: 24,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              duration: const Duration(milliseconds: 400),
+              tabBackgroundColor: primaryBlue.withOpacity(0.1),
+              color: primaryBlue.withOpacity(0.7),
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              tabs: const [
+                GButton(
+                  icon: Icons.casino,
+                  text: 'Play',
+                ),
+                GButton(
+                  icon: Icons.add_circle_outline,
+                  text: 'Add Questions',
+                ),
+                GButton(
+                  icon: Icons.settings,
+                  text: 'Settings',
+                ),
+              ],
+              selectedIndex: _selectedIndex,
+              onTabChange: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
             ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.add_circle_outline), // Icon for adding questions
-              label: 'Add Questions',
-              backgroundColor: cardBackground,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.settings), // Icon for settings
-              label: 'Settings',
-              backgroundColor: cardBackground,
-            ),
-          ],
-          currentIndex: _selectedIndex, // Highlight the current tab
-          selectedItemColor: accentPink, // Vibrant pink for selected item
-          unselectedItemColor: primaryBlue.withOpacity(0.7), // Muted primary blue for unselected
-          onTap: _onItemTapped, // Call _onItemTapped when a tab is tapped
-          backgroundColor: Colors.transparent, // Set to transparent as container handles color
-          type: BottomNavigationBarType.fixed, // Ensures all labels are visible
-          selectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14), // Poppins bold
-          unselectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.normal, fontSize: 12), // Poppins normal
-          elevation: 0, // Remove default elevation as container provides shadow
+          ),
         ),
       ),
     );

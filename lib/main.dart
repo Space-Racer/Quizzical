@@ -1,10 +1,10 @@
 // main.dart
 import 'package:flutter/material.dart';
-import 'package:my_spinner_quiz_app/auth_screen.dart';
-import 'package:my_spinner_quiz_app/app_theme.dart';
-import 'package:my_spinner_quiz_app/app_navigation.dart'; // Assuming this exists for navigation after login
+import 'package:quizzical/auth_screen.dart';
+import 'package:quizzical/app_theme.dart';
+import 'package:quizzical/app_navigation.dart'; // Assuming this exists for navigation after login
 import 'package:firebase_core/firebase_core.dart';
-import 'package:my_spinner_quiz_app/firebase_options.dart';
+import 'package:quizzical/firebase_options.dart';
 
 // Global variables related to Canvas environment (kept as placeholders but not used for Firebase)
 // DO NOT modify these. They are injected at runtime.

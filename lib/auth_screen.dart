@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:my_spinner_quiz_app/app_navigation.dart'; // Assuming this exists
-import 'package:my_spinner_quiz_app/background_painter.dart'; // Import the background painter
-import 'package:my_spinner_quiz_app/app_theme.dart'; // Import app theme for colors
+import 'package:quizzical/app_navigation.dart'; // Assuming this exists
+import 'package:quizzical/background_painter.dart'; // Import the background painter
+import 'package:quizzical/app_theme.dart'; // Import app theme for colors
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});

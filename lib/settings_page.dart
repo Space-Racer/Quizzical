@@ -1,9 +1,9 @@
 // lib/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:my_spinner_quiz_app/app_theme.dart'; // Import app theme for colors
+import 'package:quizzical/app_theme.dart'; // Import app theme for colors
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:my_spinner_quiz_app/auth_screen.dart';
+import 'package:quizzical/auth_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -19,6 +19,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _userNameController = TextEditingController(text: 'PlayerOne');
   // State for the confetti toggle
   bool _confettiEnabled = true;
+  bool _reviewModeEnabled = false;
 
   @override
   void initState() {
@@ -43,6 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _userNameController.text = data?['displayName'] ?? '';
           _timerDurationController.text = (data?['timerDuration'] ?? 10).toString();
           _confettiEnabled = data?['confettiEnabled'] ?? true;
+          _reviewModeEnabled = data?['reviewModeEnabled'] ?? false;
         });
       }
     }
@@ -121,6 +123,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .doc('data')
           .update({'confettiEnabled': _confettiEnabled});
       _showSnackBar('Visual settings saved!');
+    }
+  }
+
+  void _saveReviewModeSettings() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection('artifacts')
+          .doc('my-trivia-app-id')
+          .collection('users')
+          .doc(user.uid)
+          .collection('profile')
+          .doc('data')
+          .update({'reviewModeEnabled': _reviewModeEnabled});
+      _showSnackBar('Review mode settings saved!');
     }
   }
 
@@ -277,6 +294,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             context,
                             text: 'Save Visuals',
                             onPressed: _saveVisualSettings,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isMobile ? 20 : 30), // Extra space at bottom
+
+                      // Review Mode Section
+                      _buildSettingsSection(
+                        context,
+                        title: 'Review Mode',
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Enable Review Mode:',
+                                style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w600, color: AppColors.primaryBlue),
+                              ),
+                              Switch(
+                                value: _reviewModeEnabled,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _reviewModeEnabled = value;
+                                  });
+                                },
+                                activeColor: AppColors.accentGreen,
+                                inactiveThumbColor: AppColors.accentRed,
+                                inactiveTrackColor: AppColors.accentRed.withOpacity(0.5),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: isMobile ? 15 : 20),
+                          _buildSaveButton(
+                            context,
+                            text: 'Save Review Mode',
+                            onPressed: _saveReviewModeSettings,
                           ),
                         ],
                       ),

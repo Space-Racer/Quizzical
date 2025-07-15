@@ -1,10 +1,11 @@
 // lib/add_remove_questions_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:my_spinner_quiz_app/app_theme.dart';
+import 'package:quizzical/app_theme.dart'; // Import app theme for colors
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// Re-using BackgroundPainter as it's a simple, abstract background
 class BackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -21,9 +22,12 @@ class BackgroundPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
 }
 
+// Re-using the Question model from quiz_game.dart
 class Question {
   final String id;
   final String questionText;
@@ -56,13 +60,17 @@ class AddRemoveQuestionsScreen extends StatefulWidget {
 }
 
 class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
+  // Controllers for the add question form
   final TextEditingController _newQuestionTextController = TextEditingController();
   final TextEditingController _option1Controller = TextEditingController();
   final TextEditingController _option2Controller = TextEditingController();
   final TextEditingController _option3Controller = TextEditingController();
   final TextEditingController _option4Controller = TextEditingController();
 
+  // To track which option is selected as correct (0-indexed)
   int? _correctOptionIndex;
+  Question? _editingQuestion;
+
   final List<Question> _questions = [];
 
   @override
@@ -81,6 +89,7 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
     super.dispose();
   }
 
+  // Helper to show a SnackBar message
   void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -130,18 +139,37 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
 
     final String correctAnswer = options[_correctOptionIndex!];
 
-    await FirebaseFirestore.instance
-        .collection('artifacts')
-        .doc('my-trivia-app-id')
-        .collection('users')
-        .doc(user.uid)
-        .collection('questions')
-        .add({
-      'questionText': questionText,
-      'options': options,
-      'correctAnswer': correctAnswer,
-      'createdAt': Timestamp.now(),
-    });
+    if (_editingQuestion != null) {
+      // Update existing question
+      await FirebaseFirestore.instance
+          .collection('artifacts')
+          .doc('my-trivia-app-id')
+          .collection('users')
+          .doc(user.uid)
+          .collection('questions')
+          .doc(_editingQuestion!.id)
+          .update({
+        'questionText': questionText,
+        'options': options,
+        'correctAnswer': correctAnswer,
+      });
+      _showSnackBar('Question updated successfully!');
+    } else {
+      // Add new question
+      await FirebaseFirestore.instance
+          .collection('artifacts')
+          .doc('my-trivia-app-id')
+          .collection('users')
+          .doc(user.uid)
+          .collection('questions')
+          .add({
+        'questionText': questionText,
+        'options': options,
+        'correctAnswer': correctAnswer,
+        'createdAt': Timestamp.now(),
+      });
+      _showSnackBar('Question added successfully!');
+    }
 
     _newQuestionTextController.clear();
     _option1Controller.clear();
@@ -150,9 +178,9 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
     _option4Controller.clear();
     setState(() {
       _correctOptionIndex = null;
+      _editingQuestion = null;
     });
 
-    _showSnackBar('Question added successfully!');
     _fetchQuestions();
   }
 
@@ -164,9 +192,9 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
     _option4Controller.text = question.answers[3];
     setState(() {
       _correctOptionIndex = question.answers.indexOf(question.correctAnswer);
+      _editingQuestion = question;
     });
-
-    _showSnackBar('Editing question. Make changes and add again to save.');
+    _showSnackBar('Editing question. Make changes and update.', isError: false);
   }
 
   void _removeQuestion(String questionId) async {
@@ -209,15 +237,16 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
     );
   }
 
+  // Helper method to build a consistent section card
   Widget _buildSectionCard(BuildContext context, {required String title, required List<Widget> children}) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768;
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 700),
+      constraints: const BoxConstraints(maxWidth: 700), // Max width for these cards
       padding: EdgeInsets.all(isMobile ? 20 : 30),
-      margin: EdgeInsets.only(bottom: isMobile ? 20 : 30),
+      margin: EdgeInsets.only(bottom: isMobile ? 20 : 30), // Margin at bottom
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: AppBorderRadius.small,
@@ -233,7 +262,7 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
               fontWeight: FontWeight.bold,
               fontSize: isMobile ? 22 : 28,
             ),
-            textAlign: TextAlign.center,
+            textAlign: TextAlign.center, // Center title within its section
           ),
           SizedBox(height: isMobile ? 15 : 25),
           ...children,
@@ -248,9 +277,9 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
     final isMobile = screenWidth < 768;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.transparent, // Allow gradient from parent
       appBar: AppBar(
-        toolbarHeight: 0,
+        toolbarHeight: 0, // Makes app bar effectively invisible
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -267,12 +296,19 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
         ),
         child: Stack(
           children: [
-            Positioned.fill(child: CustomPaint(painter: BackgroundPainter())),
+            // BackgroundPainter for the subtle circles
+            Positioned.fill(
+              child: CustomPaint(
+                painter: BackgroundPainter(),
+              ),
+            ),
             Positioned.fill(
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(isMobile ? 15.0 : 30.0),
+                padding: EdgeInsets.all(isMobile ? 15.0 : 30.0), // Responsive padding
                 child: Center(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
                       Text(
                         'Manage Questions',
@@ -281,54 +317,101 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
                           fontWeight: FontWeight.bold,
                           fontSize: isMobile ? 28 : 36,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                       SizedBox(height: isMobile ? 20 : 30),
+
+                      // Add New Question Form
                       _buildSectionCard(
                         context,
                         title: 'Add New Question',
                         children: [
-                          Text('Question:', style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w600, color: AppColors.primaryBlue)),
+                          Text(
+                            'Question:',
+                            style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w600, color: AppColors.primaryBlue),
+                          ),
                           SizedBox(height: isMobile ? 8 : 10),
                           TextFormField(
                             controller: _newQuestionTextController,
                             decoration: InputDecoration(
                               hintText: 'Enter your question here...',
-                              border: OutlineInputBorder(borderRadius: AppBorderRadius.small, borderSide: BorderSide(color: AppColors.secondaryPurple)),
-                              focusedBorder: OutlineInputBorder(borderRadius: AppBorderRadius.small, borderSide: BorderSide(color: AppColors.accentPink, width: 2)),
+                              border: OutlineInputBorder(
+                                borderRadius: AppBorderRadius.small,
+                                borderSide: BorderSide(color: AppColors.secondaryPurple),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: AppBorderRadius.small,
+                                borderSide: BorderSide(color: AppColors.accentPink, width: 2),
+                              ),
                               contentPadding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 15, horizontal: 15),
                             ),
                             style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, color: AppColors.textDark),
                           ),
                           SizedBox(height: isMobile ? 15 : 20),
-                          Text('Options (select the correct one):', style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w600, color: AppColors.primaryBlue)),
+                          Text(
+                            'Options (select the correct one):',
+                            style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w600, color: AppColors.primaryBlue),
+                          ),
                           SizedBox(height: isMobile ? 8 : 10),
-                          _buildOptionField(controller: _option1Controller, optionText: 'Option A', optionIndex: 0, isMobile: isMobile),
-                          _buildOptionField(controller: _option2Controller, optionText: 'Option B', optionIndex: 1, isMobile: isMobile),
-                          _buildOptionField(controller: _option3Controller, optionText: 'Option C', optionIndex: 2, isMobile: isMobile),
-                          _buildOptionField(controller: _option4Controller, optionText: 'Option D', optionIndex: 3, isMobile: isMobile),
+                          // Option 1
+                          _buildOptionField(
+                              controller: _option1Controller,
+                              optionText: 'Option A',
+                              optionIndex: 0,
+                              isMobile: isMobile),
+                          // Option 2
+                          _buildOptionField(
+                              controller: _option2Controller,
+                              optionText: 'Option B',
+                              optionIndex: 1,
+                              isMobile: isMobile),
+                          // Option 3
+                          _buildOptionField(
+                              controller: _option3Controller,
+                              optionText: 'Option C',
+                              optionIndex: 2,
+                              isMobile: isMobile),
+                          // Option 4
+                          _buildOptionField(
+                              controller: _option4Controller,
+                              optionText: 'Option D',
+                              optionIndex: 3,
+                              isMobile: isMobile),
                           SizedBox(height: isMobile ? 15 : 20),
                           ElevatedButton(
                             onPressed: _addNewQuestion,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.accentPink,
+                              backgroundColor: AppColors.accentPink, // Pink for add button
                               foregroundColor: AppColors.textLight,
                               padding: EdgeInsets.symmetric(horizontal: isMobile ? 25 : 35, vertical: isMobile ? 12 : 15),
                               shape: RoundedRectangleBorder(borderRadius: AppBorderRadius.small),
                               elevation: 5,
                               shadowColor: Colors.black.withOpacity(0.15),
                             ),
-                            child: Text('Add Question', style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.bold)),
+                            child: Text(
+                              'Add Question',
+                              style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ],
                       ),
+
+                      // Your Questions List
                       _buildSectionCard(
                         context,
                         title: 'Your Questions',
                         children: [
                           if (_questions.isEmpty)
-                            Text('No questions added yet. Add some above!', style: GoogleFonts.poppins(fontSize: isMobile ? 14 : 16, color: AppColors.textDark.withOpacity(0.7)))
+                            Text(
+                              'No questions added yet. Add some above!',
+                              style: GoogleFonts.poppins(fontSize: isMobile ? 14 : 16, color: AppColors.textDark.withOpacity(0.7)),
+                            )
                           else
-                            ..._questions.map((q) => _buildQuestionItem(context, q, isMobile)).toList(),
+                            ..._questions.asMap().entries.map((entry) {
+                              int index = entry.key;
+                              Question q = entry.value;
+                              return _buildQuestionItem(context, q, isMobile);
+                            }).toList(),
                         ],
                       ),
                     ],
@@ -342,6 +425,7 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
     );
   }
 
+  // Helper to build an option field with a radio button
   Widget _buildOptionField({
     required TextEditingController controller,
     required String optionText,
@@ -386,6 +470,7 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
     );
   }
 
+  // Helper to build a single question item in the list
   Widget _buildQuestionItem(BuildContext context, Question q, bool isMobile) {
     return Container(
       padding: EdgeInsets.all(isMobile ? 15 : 20),
@@ -398,16 +483,22 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(q.questionText, style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w600, color: AppColors.textLight)),
+          Text(
+            q.questionText,
+            style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w600, color: AppColors.textLight),
+          ),
           SizedBox(height: isMobile ? 5 : 8),
-          Text('Correct: ${q.correctAnswer}', style: GoogleFonts.poppins(fontSize: isMobile ? 14 : 16, fontStyle: FontStyle.italic, color: AppColors.textLight.withOpacity(0.8))),
+          Text(
+            'Correct: ${q.correctAnswer}',
+            style: GoogleFonts.poppins(fontSize: isMobile ? 14 : 16, fontStyle: FontStyle.italic, color: AppColors.textLight.withOpacity(0.8)),
+          ),
           SizedBox(height: isMobile ? 10 : 15),
           Row(
             children: [
               ElevatedButton(
                 onPressed: () => _editQuestion(q),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryBlue,
+                  backgroundColor: AppColors.primaryBlue, // Amber for edit
                   foregroundColor: AppColors.textLight,
                   padding: EdgeInsets.symmetric(horizontal: isMobile ? 15 : 20, vertical: isMobile ? 8 : 10),
                   shape: RoundedRectangleBorder(borderRadius: AppBorderRadius.small),
@@ -419,7 +510,7 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
               ElevatedButton(
                 onPressed: () => _removeQuestion(q.id),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentRed,
+                  backgroundColor: AppColors.accentRed, // Red for remove
                   foregroundColor: AppColors.textLight,
                   padding: EdgeInsets.symmetric(horizontal: isMobile ? 15 : 20, vertical: isMobile ? 8 : 10),
                   shape: RoundedRectangleBorder(borderRadius: AppBorderRadius.small),

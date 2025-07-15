@@ -5,8 +5,9 @@ import 'dart:async'; // Still needed for game timer
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import for Google Fonts
-// import 'package:confetti/confetti.dart'; // Keep if you want confetti
-// import 'package:just_audio/just_audio.dart'; // Keep if you want sound effects
+import 'package:confetti/confetti.dart'; // Keep if you want confetti
+import 'package:audioplayers/audioplayers.dart'; // Keep if you want sound effects
+import 'package:vibration/vibration.dart';
 
 // Re-using BackgroundPainter as it's a simple, abstract background
 class BackgroundPainter extends CustomPainter {
@@ -67,40 +68,41 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
   bool _answerSubmitted = false;
   int _currentQuestionIndex = 0; // To track current question for "Next" logic
   String _displayName = 'Player';
+  int _xp = 0;
 
   Timer? _gameTimer;
   int _timeLeftInSeconds = 10; // Changed to 10 seconds as per HTML mockup timer
 
   bool _gameEnded = false;
   bool _isLoadingQuestions = true;
+  bool _reviewModeEnabled = false;
+  List<Question> _incorrectQuestions = [];
+  bool _isReviewSession = false;
 
-  // Confetti controller (keep if you want the effect)
-  // late ConfettiController _confettiController;
-  // Audio players for sound effects (keep if you want sounds)
-  // late AudioPlayer _correctAudioPlayer;
-  // late AudioPlayer _incorrectAudioPlayer;
+  late ConfettiController _confettiController;
+  late AudioPlayer _correctAudioPlayer;
+  late AudioPlayer _incorrectAudioPlayer;
 
   @override
   void initState() {
     super.initState();
-    // _confettiController = ConfettiController(duration: const Duration(seconds: 1));
-    // _correctAudioPlayer = AudioPlayer();
-    // _incorrectAudioPlayer = AudioPlayer();
-    // _loadAudio(); // Uncomment if using audio
+    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
+    _correctAudioPlayer = AudioPlayer();
+    _incorrectAudioPlayer = AudioPlayer();
+    _loadAudio();
 
     _loadUserData();
     _fetchQuestions();
   }
 
-  // Uncomment and implement if using audio
-  // Future<void> _loadAudio() async {
-  //   try {
-  //     await _correctAudioPlayer.setAsset('assets/audio/correct.mp3');
-  //     await _incorrectAudioPlayer.setAsset('assets/audio/incorrect.mp3');
-  //   } catch (e) {
-  //     print("Error loading audio: $e. Make sure assets are correctly configured.");
-  //   }
-  // }
+  Future<void> _loadAudio() async {
+    try {
+      _correctAudioPlayer.setSource(AssetSource('audio/correct.mp3'));
+      _incorrectAudioPlayer.setSource(AssetSource('audio/incorrect.mp3'));
+    } catch (e) {
+      print("Error loading audio: $e. Make sure assets are correctly configured in pubspec.yaml");
+    }
+  }
 
   void _startTimer() {
     _timeLeftInSeconds = 10; // Reset timer for each question
@@ -132,6 +134,8 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
       if (doc.exists) {
         setState(() {
           _displayName = doc.data()?['displayName'] ?? 'Player';
+          _reviewModeEnabled = doc.data()?['reviewModeEnabled'] ?? false;
+          _xp = doc.data()?['xp'] ?? 0;
         });
       }
     }
@@ -182,28 +186,21 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
   }
 
   void _loadNextQuestion() {
-    _gameTimer?.cancel(); // Stop timer for previous question
+    _gameTimer?.cancel();
 
-    if (_allQuestions.isEmpty) {
-      _currentQuestion = Question(
-        questionText: "No questions available.",
-        answers: [],
-        correctAnswer: "",
-      );
-      return;
-    }
     if (_currentQuestionIndex < _allQuestions.length) {
       setState(() {
         _currentQuestion = _allQuestions[_currentQuestionIndex];
-        _currentQuestion!.answers.shuffle(); // Shuffle answers for display
+        _currentQuestion!.answers.shuffle();
         _selectedAnswer = null;
         _answerSubmitted = false;
-        _timeLeftInSeconds = 10; // Reset timer for new question
+        _timeLeftInSeconds = 10;
       });
-      _currentQuestionIndex++; // Increment for next question
-      _startTimer(); // Start timer for new question
+      _currentQuestionIndex++;
+      _startTimer();
+    } else if (_reviewModeEnabled && _incorrectQuestions.isNotEmpty && !_isReviewSession) {
+      _startReviewSession();
     } else {
-      // All questions played, end game
       setState(() {
         _gameEnded = true;
       });
@@ -232,20 +229,27 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
     setState(() {
       _answerSubmitted = true;
       if (isTimeUp) {
+        Vibration.vibrate(duration: 100);
         print("Time's up! Question skipped.");
-        // Optionally penalize for time up or just move on
+        if (_reviewModeEnabled) {
+          _incorrectQuestions.add(_currentQuestion!);
+        }
       } else if (_selectedAnswer == _currentQuestion!.correctAnswer) {
         _score++;
-        // _correctAudioPlayer.seek(Duration.zero); // Uncomment for audio
-        // _correctAudioPlayer.play(); // Uncomment for audio
-        // _confettiController.play(); // Uncomment for confetti
+        _updateXp(10);
+        _correctAudioPlayer.resume();
+        _confettiController.play();
+        Vibration.vibrate(duration: 50);
       } else {
         // Only decrement score if an incorrect answer was explicitly selected, not just time up
         if (_selectedAnswer != null) {
           _score--;
+          if (_reviewModeEnabled) {
+            _incorrectQuestions.add(_currentQuestion!);
+          }
+          _incorrectAudioPlayer.resume();
+          Vibration.vibrate(duration: 400);
         }
-        // _incorrectAudioPlayer.seek(Duration.zero); // Uncomment for audio
-        // _incorrectAudioPlayer.play(); // Uncomment for audio
       }
     });
 
@@ -253,6 +257,31 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
     Future.delayed(const Duration(milliseconds: 1500), () {
       _loadNextQuestion();
     });
+  }
+
+  void _startReviewSession() {
+    setState(() {
+      _isReviewSession = true;
+      _allQuestions = _incorrectQuestions;
+      _incorrectQuestions = [];
+      _currentQuestionIndex = 0;
+    });
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Review Time!'),
+        content: Text('Let\'s go over the questions you got wrong.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _loadNextQuestion();
+            },
+            child: Text('Start Review'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _resetGame() {
@@ -271,7 +300,25 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
     _fetchQuestions();
   }
 
+  void _updateXp(int amount) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      FirebaseFirestore.instance
+          .collection('artifacts')
+          .doc('my-trivia-app-id')
+          .collection('users')
+          .doc(user.uid)
+          .collection('profile')
+          .doc('data')
+          .update({'xp': FieldValue.increment(amount)});
+      setState(() {
+        _xp += amount;
+      });
+    }
+  }
+
   void _showGameEndDialog() {
+    _updateXp(50); // Award bonus XP for completing the quiz
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       FirebaseFirestore.instance
@@ -323,11 +370,10 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
 
   @override
   void dispose() {
-    // _spinnerController.dispose(); // No longer needed if spinner is removed
     _gameTimer?.cancel();
-    // _confettiController.dispose(); // Uncomment if using confetti
-    // _correctAudioPlayer.dispose(); // Uncomment if using audio
-    // _incorrectAudioPlayer.dispose(); // Uncomment if using audio
+    _confettiController.dispose();
+    _correctAudioPlayer.dispose();
+    _incorrectAudioPlayer.dispose();
     super.dispose();
   }
 
@@ -408,25 +454,14 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
                           // User Info
                           Row(
                             children: [
-                              Container(
-                                width: 45,
-                                height: 45,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: accentPink, width: 2), // Pink border
-                                  color: textWhite, // White background
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    _displayName.isNotEmpty ? _displayName[0].toUpperCase() : 'P',
-                                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: accentPink),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
                               Text(
                                 'Hi, $_displayName!',
                                 style: GoogleFonts.poppins(fontSize: 18, color: primaryPurpleDark, fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'XP: $_xp',
+                                style: GoogleFonts.poppins(fontSize: 16, color: primaryPurpleDark, fontWeight: FontWeight.w400),
                               ),
                             ],
                           ),
@@ -501,33 +536,64 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
 
                     // Answer Buttons Grid
                     if (showQuestionContent && _currentQuestion!.answers.isNotEmpty)
-                      GridView.builder(
-                        shrinkWrap: true, // Important for GridView inside Column
-                        physics: const NeverScrollableScrollPhysics(), // Disable GridView scrolling
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, // 2 buttons per row
-                          crossAxisSpacing: 15.0, // Horizontal spacing
-                          mainAxisSpacing: 15.0, // Vertical spacing
-                          childAspectRatio: 2.5, // Adjust aspect ratio for button height
+                      Flexible( // Flexible wraps only the GridView.builder
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            // Calculate available height for the GridView
+                            final double availableHeight = constraints.maxHeight;
+                            // Assuming 2 rows for 4 answers, and 15.0 mainAxisSpacing
+                            // We want (2 * itemHeight) + mainAxisSpacing to fit within availableHeight
+                            // itemHeight = (availableHeight - mainAxisSpacing) / 2
+                            // childAspectRatio = itemWidth / itemHeight
+                            // itemWidth = (constraints.maxWidth - crossAxisSpacing) / 2
+
+                            final double crossAxisSpacing = 15.0;
+                            final double mainAxisSpacing = 15.0;
+                            final double itemWidth = (constraints.maxWidth - crossAxisSpacing) / 2;
+
+                            double calculatedChildAspectRatio = 2.5; // Default value
+
+                            if (availableHeight > 0) {
+                              // Calculate the target item height to fit 2 rows
+                              final double targetItemHeight = (availableHeight - mainAxisSpacing) / 2;
+                              if (targetItemHeight > 0 && itemWidth > 0) {
+                                calculatedChildAspectRatio = itemWidth / targetItemHeight;
+                                // Add a small buffer or cap to avoid extremely wide/short buttons
+                                if (calculatedChildAspectRatio < 1.0) calculatedChildAspectRatio = 1.0; // Prevent very tall buttons
+                                if (calculatedChildAspectRatio > 5.0) calculatedChildAspectRatio = 5.0; // Prevent very short buttons
+                              }
+                            }
+
+                            return GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: crossAxisSpacing,
+                                mainAxisSpacing: mainAxisSpacing,
+                                childAspectRatio: calculatedChildAspectRatio, // Use calculated aspect ratio
+                              ),
+                              itemCount: _currentQuestion!.answers.length,
+                              itemBuilder: (context, index) {
+                                final answer = _currentQuestion!.answers[index];
+                                return AnswerButton(
+                                  answerText: answer,
+                                  isSelected: _selectedAnswer == answer,
+                                  isCorrect: _answerSubmitted && answer == _currentQuestion!.correctAnswer,
+                                  isIncorrect: _answerSubmitted && _selectedAnswer == answer && answer != _currentQuestion!.correctAnswer,
+                                  onTap: _answerSubmitted || _gameEnded ? null : () => _selectAnswer(answer),
+                                  primaryPurpleDark: primaryPurpleDark,
+                                  secondaryPurpleMedium: secondaryPurpleMedium,
+                                  textWhite: textWhite,
+                                  successGreen: successGreen,
+                                  errorRed: errorRed,
+                                );
+                              },
+                            );
+                          },
                         ),
-                        itemCount: _currentQuestion!.answers.length,
-                        itemBuilder: (context, index) {
-                          final answer = _currentQuestion!.answers[index];
-                          return AnswerButton(
-                            answerText: answer,
-                            isSelected: _selectedAnswer == answer,
-                            isCorrect: _answerSubmitted && answer == _currentQuestion!.correctAnswer,
-                            isIncorrect: _answerSubmitted && _selectedAnswer == answer && answer != _currentQuestion!.correctAnswer,
-                            onTap: _answerSubmitted || _gameEnded ? null : () => _selectAnswer(answer),
-                            primaryPurpleDark: primaryPurpleDark,
-                            secondaryPurpleMedium: secondaryPurpleMedium,
-                            textWhite: textWhite,
-                            successGreen: successGreen,
-                            errorRed: errorRed,
-                          );
-                        },
                       ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 30), // This SizedBox is now a direct child of the Column
 
                     // Next Question Button (only appears after answer submitted)
                     if (_answerSubmitted && !_gameEnded)
@@ -548,20 +614,19 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
                 ),
               ),
             ),
-            // Confetti overlay (uncomment if using confetti)
-            // Align(
-            //   alignment: Alignment.topCenter,
-            //   child: ConfettiWidget(
-            //     confettiController: _confettiController,
-            //     blastDirection: pi / 2,
-            //     maxBlastForce: 20,
-            //     minBlastForce: 8,
-            //     emissionFrequency: 0.03,
-            //     numberOfParticles: 20,
-            //     gravity: 0.3,
-            //     colors: [accentPink, successGreen, primaryPurpleDark, textWhite],
-            //   ),
-            // ),
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirection: pi / 2,
+                maxBlastForce: 20,
+                minBlastForce: 8,
+                emissionFrequency: 0.03,
+                numberOfParticles: 20,
+                gravity: 0.3,
+                colors: [accentPink, successGreen, primaryPurpleDark, textWhite],
+              ),
+            ),
           ],
         ),
       ),
