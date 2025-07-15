@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:quizzical/auth_screen.dart';
 import 'package:quizzical/app_theme.dart';
-import 'package:quizzical/app_navigation.dart'; // Assuming this exists for navigation after login
 import 'package:firebase_core/firebase_core.dart';
 import 'package:quizzical/firebase_options.dart';
 

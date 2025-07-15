@@ -53,14 +53,15 @@ class Question {
   }
 }
 
-class SpinnerQuizPage extends StatefulWidget { // Renaming this to QuizPage might be better, but keeping for now
-  const SpinnerQuizPage({super.key});
+class QuizPage extends StatefulWidget {
+  final String setId;
+  const QuizPage({super.key, required this.setId});
 
   @override
-  State<SpinnerQuizPage> createState() => _SpinnerQuizPageState();
+  State<QuizPage> createState() => _QuizPageState();
 }
 
-class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTickerProviderStateMixin
+class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderStateMixin
   int _score = 0;
   List<Question> _allQuestions = [];
   Question? _currentQuestion;
@@ -123,7 +124,7 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
   Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final doc = await FirebaseFirestore.instance
+      final profileDoc = await FirebaseFirestore.instance
           .collection('artifacts')
           .doc('my-trivia-app-id')
           .collection('users')
@@ -131,12 +132,32 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
           .collection('profile')
           .doc('data')
           .get();
-      if (doc.exists) {
+      if (profileDoc.exists) {
         setState(() {
-          _displayName = doc.data()?['displayName'] ?? 'Player';
-          _reviewModeEnabled = doc.data()?['reviewModeEnabled'] ?? false;
-          _xp = doc.data()?['xp'] ?? 0;
+          _displayName = profileDoc.data()?['displayName'] ?? 'Player';
+          _xp = profileDoc.data()?['xp'] ?? 0;
         });
+      }
+
+      if (!user.isAnonymous) {
+        final settingsDoc = await FirebaseFirestore.instance
+            .collection('artifacts')
+            .doc('my-trivia-app-id')
+            .collection('users')
+            .doc(user.uid)
+            .collection('profile')
+            .doc('settings')
+            .get();
+        if (settingsDoc.exists) {
+          setState(() {
+            _reviewModeEnabled = settingsDoc.data()?['review'] ?? false;
+            final confettiEnabled = settingsDoc.data()?['confetti'] ?? true;
+            _timeLeftInSeconds = settingsDoc.data()?['timerDuration'] ?? 10;
+            if (!confettiEnabled) {
+              _confettiController.stop();
+            }
+          });
+        }
       }
     }
   }
@@ -158,9 +179,12 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
           .doc('my-trivia-app-id')
           .collection('users')
           .doc(user.uid)
+          .collection('question_sets')
+          .doc(widget.setId)
           .collection('questions')
           .get();
-      _allQuestions = snapshot.docs.map((doc) => Question.fromFirestore(doc)).toList();
+      _allQuestions =
+          snapshot.docs.map((doc) => Question.fromFirestore(doc)).toList();
     }
 
     if (_allQuestions.isEmpty) {
@@ -168,7 +192,7 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
       setState(() {
         _isLoadingQuestions = false;
         _currentQuestion = Question(
-          questionText: "No questions available. Add some in the settings!",
+          questionText: "No questions available in this set.",
           answers: [],
           correctAnswer: "",
         );
@@ -238,7 +262,24 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
         _score++;
         _updateXp(10);
         _correctAudioPlayer.resume();
-        _confettiController.play();
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null && !user.isAnonymous) {
+          FirebaseFirestore.instance
+              .collection('artifacts')
+              .doc('my-trivia-app-id')
+              .collection('users')
+              .doc(user.uid)
+              .collection('profile')
+              .doc('settings')
+              .get()
+              .then((doc) {
+            if (doc.exists && (doc.data()?['confetti'] ?? true)) {
+              _confettiController.play();
+            }
+          });
+        } else if (user != null && user.isAnonymous) {
+          _confettiController.play();
+        }
         Vibration.vibrate(duration: 50);
       } else {
         // Only decrement score if an incorrect answer was explicitly selected, not just time up
@@ -400,12 +441,10 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
     return Scaffold(
       backgroundColor: Colors.transparent, // Allow gradient from parent
       appBar: AppBar(
-        // The mockup doesn't show an AppBar, so we'll make it transparent/empty
-        // or remove it if AppNavigationScreen handles it. For now, let's remove it
-        // as the design has top-left user info and top-right question number.
-        toolbarHeight: 0, // Makes app bar effectively invisible
+        title: const Text(''),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -459,9 +498,14 @@ class _SpinnerQuizPageState extends State<SpinnerQuizPage> { // Removed SingleTi
                                 style: GoogleFonts.poppins(fontSize: 18, color: primaryPurpleDark, fontWeight: FontWeight.w600),
                               ),
                               const SizedBox(width: 10),
+                              // Highlighted XP text
                               Text(
                                 'XP: $_xp',
-                                style: GoogleFonts.poppins(fontSize: 16, color: primaryPurpleDark, fontWeight: FontWeight.w400),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18, // Slightly larger font size
+                                  color: Colors.amber[700], // Golden color
+                                  fontWeight: FontWeight.bold, // Make it bolder
+                                ),
                               ),
                             ],
                           ),

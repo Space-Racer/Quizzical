@@ -36,15 +36,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .collection('users')
           .doc(user.uid)
           .collection('profile')
-          .doc('data')
+          .doc('settings')
           .get();
       if (doc.exists) {
         final data = doc.data();
         setState(() {
-          _userNameController.text = data?['displayName'] ?? '';
-          _timerDurationController.text = (data?['timerDuration'] ?? 10).toString();
-          _confettiEnabled = data?['confettiEnabled'] ?? true;
-          _reviewModeEnabled = data?['reviewModeEnabled'] ?? false;
+          _confettiEnabled = data?['confetti'] ?? true;
+          _reviewModeEnabled = data?['review'] ?? false;
+          _timerDurationController.text =
+              (data?['timerDuration'] ?? 30).toString();
+        });
+      }
+      final profileDoc = await FirebaseFirestore.instance
+          .collection('artifacts')
+          .doc('my-trivia-app-id')
+          .collection('users')
+          .doc(user.uid)
+          .collection('profile')
+          .doc('data')
+          .get();
+      if (profileDoc.exists) {
+        final profileData = profileDoc.data();
+        setState(() {
+          _userNameController.text = profileData?['displayName'] ?? '';
         });
       }
     }
@@ -82,11 +96,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             .collection('users')
             .doc(user.uid)
             .collection('profile')
-            .doc('data')
+            .doc('settings')
             .update({'timerDuration': newDuration});
         _showSnackBar('Timer duration saved!');
       } else {
-        _showSnackBar('Please enter a valid duration (5-60 seconds).', isError: true);
+        _showSnackBar('Please enter a valid duration (5-60 seconds).',
+            isError: true);
       }
     }
   }
@@ -120,8 +135,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .collection('users')
           .doc(user.uid)
           .collection('profile')
-          .doc('data')
-          .update({'confettiEnabled': _confettiEnabled});
+          .doc('settings')
+          .update({'confetti': _confettiEnabled});
       _showSnackBar('Visual settings saved!');
     }
   }
@@ -135,8 +150,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .collection('users')
           .doc(user.uid)
           .collection('profile')
-          .doc('data')
-          .update({'reviewModeEnabled': _reviewModeEnabled});
+          .doc('settings')
+          .update({'review': _reviewModeEnabled});
       _showSnackBar('Review mode settings saved!');
     }
   }

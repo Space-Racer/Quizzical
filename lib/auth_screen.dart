@@ -1,9 +1,8 @@
 // auth_screen.dart
 import 'package:flutter/material.dart';
-// Re-enabled Firebase imports
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:google_fonts/google_fonts.dart'; // Ensure this is imported
 import 'package:quizzical/app_navigation.dart'; // Assuming this exists
 import 'package:quizzical/background_painter.dart'; // Import the background painter
 import 'package:quizzical/app_theme.dart'; // Import app theme for colors
@@ -23,12 +22,11 @@ class _AuthScreenState extends State<AuthScreen> {
   final _displayNameController = TextEditingController();
 
   bool _isLogin = true;
-  bool _isLoading = false; // Re-enabled _isLoading for async operations
+  bool _isLoading = false;
 
-  // Firebase instances
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  String? _userId; // To store the current user's UID
+  String? _userId;
 
   @override
   void initState() {
@@ -36,20 +34,15 @@ class _AuthScreenState extends State<AuthScreen> {
     _initializeFirebase();
   }
 
-  // Initializes Firebase and sets up authentication listener
   void _initializeFirebase() async {
     try {
-      // Listen to authentication state changes
       _auth.authStateChanges().listen((user) async {
-        if (!mounted) return; // Ensure widget is still in the tree
+        if (!mounted) return;
 
         setState(() {
-          _userId = user?.uid; // Update userId when auth state changes
+          _userId = user?.uid;
         });
 
-        // If user is logged in and not on the AuthScreen, navigate to AppNavigationScreen
-        // This check prevents navigating away if the user is already on another screen
-        // and the auth state changes (e.g., token refresh).
         if (user != null && ModalRoute.of(context)?.isCurrent == true) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const AppNavigationScreen()),
@@ -74,7 +67,6 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    // Check if the widget is still mounted before showing a SnackBar
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -88,7 +80,6 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  // Handles user login or registration
   void _submitAuthForm() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
@@ -105,27 +96,23 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       if (_isLogin) {
-        // Login existing user
         await _auth.signInWithEmailAndPassword(email: email, password: password);
         _showSnackBar('Login successful!');
       } else {
-        // Register new user
         UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
 
-        // Get the newly created user's UID
         final newUserUid = userCredential.user!.uid;
 
-        // Store user profile data in Firestore
         await _firestore
             .collection('artifacts')
-            .doc('my-trivia-app-id') // Replace with your actual App ID
+            .doc('my-trivia-app-id')
             .collection('users')
             .doc(newUserUid)
             .collection('profile')
-            .doc('data') // Use 'data' as the document ID for profile
+            .doc('data')
             .set({
           'userId': newUserUid,
           'email': email,
@@ -135,9 +122,6 @@ class _AuthScreenState extends State<AuthScreen> {
 
         _showSnackBar('Registration successful!');
       }
-
-      // Navigation is handled by the authStateChanges listener,
-      // which will trigger after successful sign-in.
     } on FirebaseAuthException catch (e) {
       String message;
       if (e.code == 'weak-password') {
@@ -161,7 +145,6 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  // Handles guest login
   void _continueAsGuest() async {
     setState(() {
       _isLoading = true;
@@ -170,7 +153,6 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       await _auth.signInAnonymously();
       _showSnackBar('Signed in as Guest!');
-      // Navigation is handled by the authStateChanges listener
     } on FirebaseAuthException catch (e) {
       _showSnackBar('Failed to sign in as guest: ${e.message}', isError: true);
     } catch (e) {
@@ -187,10 +169,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 768; // Define mobile breakpoint
-
-    // Get the base style from the theme, or a default empty style if null
-    final ButtonStyle baseButtonStyle = Theme.of(context).elevatedButtonTheme.style ?? const ButtonStyle();
+    final isMobile = screenWidth < 768;
 
     return Scaffold(
       body: Container(
@@ -206,7 +185,6 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         child: Stack(
           children: [
-            // BackgroundPainter for the subtle circles
             Positioned.fill(
               child: CustomPaint(
                 painter: BackgroundPainter(),
@@ -217,39 +195,56 @@ class _AuthScreenState extends State<AuthScreen> {
                 padding: const EdgeInsets.all(24.0),
                 child: Container(
                   padding: isMobile
-                      ? const EdgeInsets.all(20.0) // Smaller padding for mobile
-                      : const EdgeInsets.all(40.0), // Larger padding for web
+                      ? const EdgeInsets.all(20.0)
+                      : const EdgeInsets.all(40.0),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: AppBorderRadius.large,
-                    boxShadow: AppShadows.heavy,
+                    color: AppColors.cardBackground, // Using AppColors for consistency
+                    borderRadius: AppBorderRadius.large, // Using AppBorderRadius
+                    boxShadow: AppShadows.heavy, // Using AppShadows
                   ),
-                  constraints: const BoxConstraints(maxWidth: 600), // Max width for auth form
+                  constraints: const BoxConstraints(maxWidth: 600),
                   child: Form(
                     key: _formKey,
                     child: Column(
-                      mainAxisSize: MainAxisSize.min, // Use min size for column
+                      mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         Text(
-                          _isLogin ? 'Welcome Back!' : 'Join Amazing Trivia!',
-                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                            fontSize: isMobile ? 2.8 * 16 : 4.0 * 16, // Responsive font size
+                          _isLogin ? 'Welcome to Quizzical!' : 'Join Quizzical!', // Changed title
+                          style: GoogleFonts.montserrat( // Changed font to Montserrat
+                            color: AppColors.primaryBlue,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isMobile ? 32 : 40, // Adjusted font size
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 30),
 
-                        // Display Name field (only for registration)
                         if (!_isLogin) ...[
                           TextFormField(
                             controller: _displayNameController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration( // Using InputDecoration directly for more control
                               labelText: 'Display Name',
                               hintText: 'Enter your display name',
-                              prefixIcon: Icon(Icons.person),
+                              prefixIcon: Icon(Icons.person, color: AppColors.primaryBlue),
+                              filled: true, // Make text field filled
+                              fillColor: AppColors.backgroundGradientStart.withOpacity(0.1), // Light fill color
+                              border: OutlineInputBorder(
+                                borderRadius: AppBorderRadius.small,
+                                borderSide: BorderSide.none, // No border by default
+                              ),
+                              enabledBorder: OutlineInputBorder( // Border when enabled
+                                borderRadius: AppBorderRadius.small,
+                                borderSide: BorderSide(color: AppColors.secondaryPurple.withOpacity(0.5), width: 1.0),
+                              ),
+                              focusedBorder: OutlineInputBorder( // Border when focused
+                                borderRadius: AppBorderRadius.small,
+                                borderSide: BorderSide(color: AppColors.accentPink, width: 2.0),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 15, horizontal: 15),
                             ),
                             keyboardType: TextInputType.text,
                             textCapitalization: TextCapitalization.words,
+                            style: GoogleFonts.montserrat(fontSize: isMobile ? 16 : 18, color: AppColors.textDark), // Montserrat font
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Please enter a display name.';
@@ -260,15 +255,30 @@ class _AuthScreenState extends State<AuthScreen> {
                           const SizedBox(height: 20),
                         ],
 
-                        // Email Field
                         TextFormField(
                           controller: _emailController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Email',
                             hintText: 'Enter your email',
-                            prefixIcon: Icon(Icons.email),
+                            prefixIcon: Icon(Icons.email, color: AppColors.primaryBlue),
+                            filled: true,
+                            fillColor: AppColors.backgroundGradientStart.withOpacity(0.1),
+                            border: OutlineInputBorder(
+                              borderRadius: AppBorderRadius.small,
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: AppBorderRadius.small,
+                              borderSide: BorderSide(color: AppColors.secondaryPurple.withOpacity(0.5), width: 1.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: AppBorderRadius.small,
+                              borderSide: BorderSide(color: AppColors.accentPink, width: 2.0),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 15, horizontal: 15),
                           ),
                           keyboardType: TextInputType.emailAddress,
+                          style: GoogleFonts.montserrat(fontSize: isMobile ? 16 : 18, color: AppColors.textDark), // Montserrat font
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Please enter your email address.';
@@ -281,15 +291,30 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Password Field
                         TextFormField(
                           controller: _passwordController,
                           obscureText: true,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Password',
                             hintText: 'Enter your password',
-                            prefixIcon: Icon(Icons.lock),
+                            prefixIcon: Icon(Icons.lock, color: AppColors.primaryBlue),
+                            filled: true,
+                            fillColor: AppColors.backgroundGradientStart.withOpacity(0.1),
+                            border: OutlineInputBorder(
+                              borderRadius: AppBorderRadius.small,
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: AppBorderRadius.small,
+                              borderSide: BorderSide(color: AppColors.secondaryPurple.withOpacity(0.5), width: 1.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: AppBorderRadius.small,
+                              borderSide: BorderSide(color: AppColors.accentPink, width: 2.0),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 15, horizontal: 15),
                           ),
+                          style: GoogleFonts.montserrat(fontSize: isMobile ? 16 : 18, color: AppColors.textDark), // Montserrat font
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Please enter a password.';
@@ -302,16 +327,31 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Confirm Password Field (only for registration)
                         if (!_isLogin) ...[
                           TextFormField(
                             controller: _confirmPasswordController,
                             obscureText: true,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Confirm Password',
                               hintText: 'Re-enter your password',
-                              prefixIcon: Icon(Icons.lock_reset),
+                              prefixIcon: Icon(Icons.lock_reset, color: AppColors.primaryBlue),
+                              filled: true,
+                              fillColor: AppColors.backgroundGradientStart.withOpacity(0.1),
+                              border: OutlineInputBorder(
+                                borderRadius: AppBorderRadius.small,
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: AppBorderRadius.small,
+                                borderSide: BorderSide(color: AppColors.secondaryPurple.withOpacity(0.5), width: 1.0),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: AppBorderRadius.small,
+                                borderSide: BorderSide(color: AppColors.accentPink, width: 2.0),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 15, horizontal: 15),
                             ),
+                            style: GoogleFonts.montserrat(fontSize: isMobile ? 16 : 18, color: AppColors.textDark), // Montserrat font
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Please confirm your password.';
@@ -324,44 +364,54 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                           const SizedBox(height: 30),
                         ] else ...[
-                          const SizedBox(height: 30), // Spacing for login form
+                          const SizedBox(height: 30),
                         ],
 
-                        // Login/Register Button
                         _isLoading
-                            ? const CircularProgressIndicator() // Show loading indicator
+                            ? const CircularProgressIndicator()
                             : ElevatedButton(
                           onPressed: _submitAuthForm,
                           style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryBlue, // Explicitly set primary blue
+                            foregroundColor: AppColors.textLight, // White text
                             padding: EdgeInsets.symmetric(
-                              horizontal: isMobile ? 25 : 35,
-                              vertical: isMobile ? 15 : 18,
+                              horizontal: isMobile ? 30 : 40, // Increased padding
+                              vertical: isMobile ? 16 : 20, // Increased padding
                             ),
-                            textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              fontSize: isMobile ? 1.1 * 16 : 1.2 * 16,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppBorderRadius.small, // Consistent border radius
                             ),
-                            backgroundColor: baseButtonStyle.backgroundColor?.resolve({}),
-                            foregroundColor: baseButtonStyle.foregroundColor?.resolve({}),
-                            shape: baseButtonStyle.shape?.resolve({}),
-                            elevation: baseButtonStyle.elevation?.resolve({}),
-                            shadowColor: baseButtonStyle.shadowColor?.resolve({}),
+                            elevation: 8, // More prominent shadow
+                            shadowColor: AppColors.primaryBlue.withOpacity(0.3), // Shadow matching button color
                           ),
-                          child: Text(_isLogin ? 'Login' : 'Register'),
+                          child: Text(
+                            _isLogin ? 'Login' : 'Register',
+                            style: GoogleFonts.montserrat( // Montserrat font
+                              fontSize: isMobile ? 18 : 20, // Adjusted font size
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 20),
 
-                        // Toggle Login/Register
                         TextButton(
                           onPressed: () {
                             setState(() {
                               _isLogin = !_isLogin;
-                              _formKey.currentState?.reset(); // Clear form fields on toggle
+                              _formKey.currentState?.reset();
                               _emailController.clear();
                               _passwordController.clear();
                               _confirmPasswordController.clear();
                               _displayNameController.clear();
                             });
                           },
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primaryBlue, // Primary blue for text button
+                            textStyle: GoogleFonts.montserrat( // Montserrat font
+                              fontSize: isMobile ? 14 : 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                           child: Text(
                             _isLogin
                                 ? 'Don\'t have an account? Register'
@@ -370,12 +420,27 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Guest Play Option
-                        TextButton(
-                          onPressed: _continueAsGuest, // Call the new _continueAsGuest method
-                          child: const Text(
+                        ElevatedButton( // Changed to ElevatedButton for "Continue as Guest"
+                          onPressed: _continueAsGuest,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.secondaryPurple, // Different color for guest button
+                            foregroundColor: AppColors.textLight,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isMobile ? 25 : 35,
+                              vertical: isMobile ? 15 : 18,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppBorderRadius.small,
+                            ),
+                            elevation: 5,
+                            shadowColor: AppColors.secondaryPurple.withOpacity(0.2),
+                          ),
+                          child: Text(
                             'Continue as Guest',
-                            // Removed explicit style override to use theme's TextButton style
+                            style: GoogleFonts.montserrat( // Montserrat font
+                              fontSize: isMobile ? 16 : 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],

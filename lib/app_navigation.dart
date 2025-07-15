@@ -1,9 +1,8 @@
 // lib/app_navigation.dart
 import 'package:flutter/material.dart';
-import 'package:quizzical/quiz_game.dart'; // Import your existing quiz game page
-import 'package:quizzical/add_question_page.dart'; // Import the new add question page
+import 'package:quizzical/create_page.dart'; // Import the new question sets page
+import 'package:quizzical/play_page.dart';
 import 'package:quizzical/settings_page.dart'; // Import the new settings page
-import 'package:google_fonts/google_fonts.dart'; // NEW: Import google_fonts for custom text styles
 import 'package:google_nav_bar/google_nav_bar.dart';
 
 class AppNavigationScreen extends StatefulWidget {
@@ -18,8 +17,8 @@ class _AppNavigationScreenState extends State<AppNavigationScreen> {
 
   // List of widgets (pages) to display in the navigation bar
   static final List<Widget> _widgetOptions = <Widget>[
-    const SpinnerQuizPage(), // Your main game page
-    const AddRemoveQuestionsScreen(), // Placeholder for adding questions
+    const PlayPage(), // Your main game page
+    const CreatePage(), // Placeholder for adding questions
     const SettingsScreen(),   // Placeholder for settings
   ];
 
@@ -90,7 +89,7 @@ class _AppNavigationScreenState extends State<AppNavigationScreen> {
                 ),
                 GButton(
                   icon: Icons.add_circle_outline,
-                  text: 'Add Questions',
+                  text: 'Create',
                 ),
                 GButton(
                   icon: Icons.settings,
