@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Amazing Quick Fire Trivia!',
+      title: 'Quizzical',
       theme: appTheme, // Apply the custom theme
       home:
       const AuthScreen(), // Directly show AuthScreen
