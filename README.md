@@ -74,4 +74,4 @@ From smart workforce management to cutting-edge business tools, our apps streaml
 
 We’re on a mission to empower both businesses and everyday users through innovation, making technology more accessible, intuitive, and impactful. From small enterprises to large-scale organizations, and from professionals to casual users, our apps are designed to enhance productivity, simplify daily tasks, and improve digital experiences.
 
-At Cool Beans Tech LLC, we’re not just coding apps—we’re brewing the future of technology, one sip at a time. �
+At Cool Beans Tech LLC, we’re not just coding apps—we’re brewing the future of technology, one sip at a time.
