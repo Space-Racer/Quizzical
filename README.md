@@ -1,66 +1,77 @@
-# 🎡 Spinner Quiz App
+# Quizzical: Your Fun Study & Trivia Tool! 🚀
 
-A fun and interactive web-based quiz game built with Flutter! Spin the wheel to get a random question, answer it to earn or lose points, and race against the clock.
+**Master Any Subject with Engaging Quizzes & Flashcards!**
 
-## ✨ Features
+## ✨ Introduction
 
-This application is designed to provide a simple yet engaging quiz experience with a vibrant and playful user interface.
+Welcome to **Quizzical!**, the vibrant and dynamic app designed to transform your study sessions into exciting trivia adventures. Whether you're preparing for an exam, learning a new language, or just love challenging your brain, Quizzical provides the perfect platform. Create personalized study materials, test your knowledge with interactive quizzes and flashcards, and track your progress in a fun, gamified environment. Say goodbye to boring rote learning and hello to **Quizzical** – where studying meets fun!
 
-* **Interactive Spinner Wheel:**
-    * A visually appealing, centrally located spinner.
-    * Simply tap the wheel to initiate a spin.
-    * Features a smooth, animated spin effect using Flutter's animation controllers, simulating a real-world wheel deceleration.
-* **Random Question Delivery:**
-    * Upon tapping the spinner, a random question from a pre-defined list of 20 questions is selected and displayed.
-    * The questions cover a range of general computing and basic math concepts.
-* **Dynamic Scoring System:**
-    * "Correct" Button: Awards the player +1 point when clicked, providing positive reinforcement.
-    * "Incorrect" Button: Deducts -1 point when clicked, reflecting a missed answer.
-    * The current score is prominently displayed at the top of the screen, updating in real-time.
-* **Time-Limited Gameplay:**
-    * Each game session is timed for 60 seconds (1 minute).
-    * A clear countdown timer is visible at the top of the screen, allowing players to monitor their remaining time.
-    * The timer visually alerts the player (e.g., flashes red) when the time is running critically low.
-* **Game Over & Score Summary:**
-    * Once the 60-second timer expires, the game automatically ends.
-    * A "Game Over!" dialog pops up, clearly displaying the player's final score for that round.
-* **Game Reset Functionality:**
-    * After the game ends, the "Game Over" dialog provides an option to "Reset Game".
-    * Clicking this button resets the score to zero, clears the current question, and restarts the 60-second timer, allowing for immediate replay.
-* **Beautiful & Fun UI/UX:**
-    * **Vibrant Color Scheme:** Utilizes a lively palette of deep purples, bright ambers, and blues to create an inviting atmosphere.
-    * **Playful Typography:** Custom font (Pacifico example, though any fun font can be used) is applied to enhance the game's lighthearted feel.
-    * **Engaging Background:** A custom painter adds subtle, dynamic background elements (like animated circles or shapes) to enhance the visual appeal.
-    * **Responsive Layout:** Built with Flutter, ensuring the application adapts seamlessly and looks great on various screen sizes, from mobile browsers to large desktop displays.
-    * **Intuitive Buttons:** Clearly labeled "Correct" and "Incorrect" buttons with distinct colors (green for correct, red for incorrect) and icons for easy interaction.
+## 🌟 Key Features
 
----
+* **⚡ Quick Fire Learning:** Engage in fast-paced sessions with a customizable timer to boost your recall speed and retention.
 
-## 🎮 Game Mechanics and Rules Tracking Worksheet
+* **📚 Personalized Study Set Creator:**
 
-### Gameplay Mechanics
+  * **Build Any Subject:** Easily create and save an unlimited number of custom question sets for any topic you can imagine – from history dates to chemical formulas, vocabulary, and more!
 
-Players interact with the game by launching the app and starting from the **Main Menu**. The game supports **two players**, Player 1 and Player 2, who compete by answering questions. The game officially begins when either player presses the "**Start Game**" button.
+  * **Flexible Learning Formats:** Choose the best way to learn for each set:
 
-Once the game starts, a **question appears on the screen**. This game uses **open-ended questions**, meaning each question has only one precise correct answer. Players must **verbally answer the question** before the **10-second timer**, displayed at the top of the screen, runs out.
+    * **Multiple Choice Quizzes:** Ideal for testing recall and understanding with four answer options.
 
-If a player provides the correct answer within the time limit, they **earn 1 point**. If neither player answers correctly within the 10-second limit, the current question is automatically **skipped**, and no points are awarded or deducted.
+    * **Dynamic Flashcards:** Perfect for memorization, allowing you to flip cards to reveal answers and self-assess your knowledge.
 
-The game consists of a total of **25 questions**. After all 25 questions have been presented and answered (or skipped), the game automatically concludes. An "**End of Game**" screen appears, clearly displaying the scores for Player 1 and Player 2, and declares the **winner** (the player with the most points). From this screen, players have the option to "**Restart Game**" to play again or "**Exit App**".
+  * **Full Control:** Add, edit, and delete individual questions or flashcards within your sets with intuitive controls.
 
-### Rules of the Game
+* **🎮 Engaging Study Modes:**
 
-* Answers must **exactly match** the correct stored answer.
-* **No external resources** (Google, books, notes, etc.) are allowed during gameplay.
-* If no correct answer is provided within **10 seconds**, the question is **skipped**.
-* Players **cannot interrupt each other** when answering a question.
-* The **score is automatically tracked** by the application.
-* The game ends after **all 25 questions** are answered.
-* The player with the **highest score wins** the game.
+  * **Interactive Quiz Mode:** Experience classic multiple-choice questions with instant visual feedback (correct answers in green, incorrect in red).
 
----
+  * **Adaptive Flashcard Mode:** Learn at your own pace! See the question, reveal the answer, and then decide if you "Got It Right" or "Got It Wrong" to reinforce your learning.
 
-## 🚀 Technologies Used
+* **🔄 Smart Review Mode:**
 
-* Flutter
-* Dart
+  * Activate "Review Mode" in your settings, and Quizzical will automatically collect all the questions or flashcards you answered incorrectly during a session.
+
+  * Once your main study session is complete, a cheerful pop-up will invite you to a dedicated **review round**, giving you a focused chance to re-learn and master your challenging topics.
+
+* **🏆 Motivating XP System:**
+
+  * Earn Experience Points (XP) as you learn and play!
+
+  * Gain XP simply for starting a new study session or quiz.
+
+  * Rack up bonus XP for every correct answer in Multiple Choice quizzes.
+
+  * Watch your XP grow on your main study dashboard, pushing you to learn even more!
+
+* **🎨 Vibrant & Polished Design:**
+
+  * Immerse yourself in a beautifully crafted user interface featuring a rich, colorful theme that makes studying a visual delight.
+
+  * Enjoy smooth animations, responsive buttons, and celebratory confetti bursts for correct answers, making every correct answer feel like a win!
+
+* **⚙️ Customizable Settings:**
+
+  * Adjust the timer duration to match your study pace or challenge yourself.
+
+  * Personalize your user profile with your name and a unique profile picture.
+
+  * Toggle fun features like confetti animations and the helpful review mode on or off.
+
+
+## Cool Beans Tech LLC
+
+> **Brewing Innovations, One Sip at a Time**
+
+
+At Cool Beans Tech LLC, we bring ideas to life by crafting innovative and intuitive apps for businesses on the Google Play Store and Apple App Store. Our mission is to bridge technology and efficiency, empowering companies with seamless digital solutions tailored to their needs.
+
+From smart workforce management to cutting-edge business tools, our apps streamline operations, enhance productivity, and redefine digital convenience. With a commitment to innovation, security, and user experience, we ensure businesses stay ahead in an ever-evolving tech landscape.
+
+
+
+**Our Vision**
+
+We’re on a mission to empower both businesses and everyday users through innovation, making technology more accessible, intuitive, and impactful. From small enterprises to large-scale organizations, and from professionals to casual users, our apps are designed to enhance productivity, simplify daily tasks, and improve digital experiences.
+
+At Cool Beans Tech LLC, we’re not just coding apps—we’re brewing the future of technology, one sip at a time. �
