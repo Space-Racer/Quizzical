@@ -85,74 +85,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _saveTimerSettings() async {
+  void _saveAllSettings() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final int? newDuration = int.tryParse(_timerDurationController.text);
-      if (newDuration != null && newDuration >= 5 && newDuration <= 60) {
-        await FirebaseFirestore.instance
-            .collection('artifacts')
-            .doc('my-trivia-app-id')
-            .collection('users')
-            .doc(user.uid)
-            .collection('profile')
-            .doc('settings')
-            .update({'timerDuration': newDuration});
-        _showSnackBar('Timer duration saved!');
-      } else {
-        _showSnackBar('Please enter a valid duration (5-60 seconds).',
-            isError: true);
-      }
-    }
-  }
+    if (user == null) return;
 
-  void _saveProfileSettings() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final String userName = _userNameController.text.trim();
-      if (userName.isNotEmpty) {
-        await FirebaseFirestore.instance
-            .collection('artifacts')
-            .doc('my-trivia-app-id')
-            .collection('users')
-            .doc(user.uid)
-            .collection('profile')
-            .doc('data')
-            .update({'displayName': userName});
-        _showSnackBar('Profile settings saved!');
-      } else {
-        _showSnackBar('User Name cannot be empty.', isError: true);
-      }
+    final newDuration = int.tryParse(_timerDurationController.text);
+    if (newDuration == null || newDuration < 5 || newDuration > 60) {
+      _showSnackBar('Please enter a valid duration (5-60 seconds).', isError: true);
+      return;
     }
-  }
 
-  void _saveVisualSettings() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      await FirebaseFirestore.instance
+    final userName = _userNameController.text.trim();
+    if (userName.isEmpty) {
+      _showSnackBar('User Name cannot be empty.', isError: true);
+      return;
+    }
+
+    try {
+      final settingsRef = FirebaseFirestore.instance
           .collection('artifacts')
           .doc('my-trivia-app-id')
           .collection('users')
           .doc(user.uid)
           .collection('profile')
-          .doc('settings')
-          .update({'confetti': _confettiEnabled});
-      _showSnackBar('Visual settings saved!');
-    }
-  }
+          .doc('settings');
 
-  void _saveReviewModeSettings() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      await FirebaseFirestore.instance
+      final profileRef = FirebaseFirestore.instance
           .collection('artifacts')
           .doc('my-trivia-app-id')
           .collection('users')
           .doc(user.uid)
           .collection('profile')
-          .doc('settings')
-          .update({'review': _reviewModeEnabled});
-      _showSnackBar('Review mode settings saved!');
+          .doc('data');
+
+      await settingsRef.set({
+        'timerDuration': newDuration,
+        'confetti': _confettiEnabled,
+        'review': _reviewModeEnabled,
+      }, SetOptions(merge: true));
+
+      await profileRef.set({'displayName': userName}, SetOptions(merge: true));
+
+      _showSnackBar('All settings saved successfully!');
+    } catch (e) {
+      _showSnackBar('An error occurred while saving settings.', isError: true);
     }
   }
 
@@ -206,43 +182,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       SizedBox(height: isMobile ? 20 : 30),
 
-                      // Timer Settings Section
-                      _buildSettingsSection(
-                        context,
-                        title: 'Timer Settings',
-                        children: [
-                          Text(
-                            'Timer Duration (seconds):',
-                            style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w600, color: AppColors.primaryBlue),
-                          ),
-                          SizedBox(height: isMobile ? 8 : 10),
-                          TextFormField(
-                            controller: _timerDurationController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              hintText: 'e.g., 10',
-                              border: OutlineInputBorder(
-                                borderRadius: AppBorderRadius.small,
-                                borderSide: BorderSide(color: AppColors.secondaryPurple),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: AppBorderRadius.small,
-                                borderSide: BorderSide(color: AppColors.accentPink, width: 2),
-                              ),
-                              contentPadding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 15, horizontal: 15),
-                            ),
-                            style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, color: AppColors.textDark),
-                          ),
-                          SizedBox(height: isMobile ? 15 : 20),
-                          _buildSaveButton(
-                            context,
-                            text: 'Save Timer',
-                            onPressed: _saveTimerSettings,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: isMobile ? 20 : 30),
-
                       // User Profile Section
                       _buildSettingsSection(
                         context,
@@ -269,11 +208,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, color: AppColors.textDark),
                           ),
-                          SizedBox(height: isMobile ? 15 : 20),
-                          _buildSaveButton(
-                            context,
-                            text: 'Save Profile',
-                            onPressed: _saveProfileSettings,
+                        ],
+                      ),
+                      SizedBox(height: isMobile ? 20 : 30),
+
+                      // Timer Settings Section
+                      _buildSettingsSection(
+                        context,
+                        title: 'Timer Settings',
+                        children: [
+                          Text(
+                            'Timer Duration (seconds):',
+                            style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w600, color: AppColors.primaryBlue),
+                          ),
+                          SizedBox(height: isMobile ? 8 : 10),
+                          TextFormField(
+                            controller: _timerDurationController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              hintText: 'e.g., 10',
+                              border: OutlineInputBorder(
+                                borderRadius: AppBorderRadius.small,
+                                borderSide: BorderSide(color: AppColors.secondaryPurple),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: AppBorderRadius.small,
+                                borderSide: BorderSide(color: AppColors.accentPink, width: 2),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 15, horizontal: 15),
+                            ),
+                            style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, color: AppColors.textDark),
                           ),
                         ],
                       ),
@@ -304,12 +268,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: isMobile ? 15 : 20),
-                          _buildSaveButton(
-                            context,
-                            text: 'Save Visuals',
-                            onPressed: _saveVisualSettings,
-                          ),
                         ],
                       ),
                       SizedBox(height: isMobile ? 20 : 30), // Extra space at bottom
@@ -339,15 +297,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: isMobile ? 15 : 20),
-                          _buildSaveButton(
-                            context,
-                            text: 'Save Review Mode',
-                            onPressed: _saveReviewModeSettings,
-                          ),
                         ],
                       ),
                       SizedBox(height: isMobile ? 20 : 30), // Extra space at bottom
+
+                      // Save and Cancel Buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton(
+                            onPressed: _saveAllSettings,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.accentGreen,
+                              foregroundColor: AppColors.textLight,
+                              padding: EdgeInsets.symmetric(horizontal: isMobile ? 25 : 35, vertical: isMobile ? 12 : 15),
+                              shape: RoundedRectangleBorder(borderRadius: AppBorderRadius.small),
+                              elevation: 5,
+                              shadowColor: Colors.black.withOpacity(0.15),
+                            ),
+                            child: Text(
+                              'Save',
+                              style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          SizedBox(width: 20),
+                          ElevatedButton(
+                            onPressed: _loadUserSettings,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.accentRed,
+                              foregroundColor: AppColors.textLight,
+                              padding: EdgeInsets.symmetric(horizontal: isMobile ? 25 : 35, vertical: isMobile ? 12 : 15),
+                              shape: RoundedRectangleBorder(borderRadius: AppBorderRadius.small),
+                              elevation: 5,
+                              shadowColor: Colors.black.withOpacity(0.15),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: isMobile ? 20 : 30),
 
                       // Logout Button
                       ElevatedButton(
@@ -359,7 +350,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.accentRed,
+                          backgroundColor: AppColors.accentOrange,
                           foregroundColor: AppColors.textLight,
                           padding: EdgeInsets.symmetric(horizontal: isMobile ? 25 : 35, vertical: isMobile ? 12 : 15),
                           shape: RoundedRectangleBorder(borderRadius: AppBorderRadius.small),

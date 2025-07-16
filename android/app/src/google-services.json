@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "967907547898",
+    "project_id": "quickfiretriviaapp",
+    "storage_bucket": "quickfiretriviaapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:967907547898:android:585b8ecfa4745927ca4743",
+        "android_client_info": {
+          "package_name": "com.coolbeanstech.quizzical"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "967907547898-bf3q1qgu8lbtk3ojbjb8u9ikclj0fffr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.coolbeanstech.quizzical",
+            "certificate_hash": "3b396b2d76fe8aa27b4ca155b5641c9b5439635c"
+          }
+        },
+        {
+          "client_id": "967907547898-rdcf6ancjsf4s7o20jdc9h72a9sdf40s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAUQtx1XJNVk6HU9bL2OWjMrt5C9G13LY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "967907547898-ep7t4pkftk7s459sa3r3debcfa088vb8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "967907547898-dr8k72nicbk39upef0ugfv1ke5uk0633.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mySpinnerQuizApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

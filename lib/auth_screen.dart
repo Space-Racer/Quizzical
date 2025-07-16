@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart'; // Ensure this is imported
 import 'package:quizzical/app_navigation.dart'; // Assuming this exists
 import 'package:quizzical/background_painter.dart'; // Import the background painter
 import 'package:quizzical/app_theme.dart'; // Import app theme for colors
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -145,18 +146,51 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  void _continueAsGuest() async {
+  Future<void> _signInWithGoogle() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      await _auth.signInAnonymously();
-      _showSnackBar('Signed in as Guest!');
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        // The user canceled the sign-in
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final User user = userCredential.user!;
+
+      if (userCredential.additionalUserInfo!.isNewUser) {
+        await _firestore
+            .collection('artifacts')
+            .doc('my-trivia-app-id')
+            .collection('users')
+            .doc(user.uid)
+            .collection('profile')
+            .doc('data')
+            .set({
+          'userId': user.uid,
+          'email': user.email,
+          'displayName': user.displayName,
+          'createdAt': Timestamp.now(),
+        });
+      }
+
+      _showSnackBar('Signed in with Google successfully!');
     } on FirebaseAuthException catch (e) {
-      _showSnackBar('Failed to sign in as guest: ${e.message}', isError: true);
+      _showSnackBar('Failed to sign in with Google: ${e.message}', isError: true);
     } catch (e) {
-      _showSnackBar('An unexpected error occurred during guest sign-in: $e', isError: true);
+      _showSnackBar('An unexpected error occurred during Google sign-in: $e', isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -418,31 +452,63 @@ class _AuthScreenState extends State<AuthScreen> {
                                 : 'Already have an account? Login',
                           ),
                         ),
-                        const SizedBox(height: 20),
 
-                        ElevatedButton( // Changed to ElevatedButton for "Continue as Guest"
-                          onPressed: _continueAsGuest,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.secondaryPurple, // Different color for guest button
-                            foregroundColor: AppColors.textLight,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isMobile ? 25 : 35,
-                              vertical: isMobile ? 15 : 18,
+                        // *** Google Sign-In ***
+
+
+                        const SizedBox(height: 20), // Spacing after the previous button
+
+                        _isLoading
+                            ? const CircularProgressIndicator()
+                            : Center( // <--- Use Center to horizontally center the button
+                          child: ConstrainedBox( // <--- Use ConstrainedBox to limit max width
+                            constraints: BoxConstraints(
+                              maxWidth: isMobile ? double.infinity : 300, // Full width on mobile, max 300 on desktop
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: AppBorderRadius.small,
-                            ),
-                            elevation: 5,
-                            shadowColor: AppColors.secondaryPurple.withOpacity(0.2),
-                          ),
-                          child: Text(
-                            'Continue as Guest',
-                            style: GoogleFonts.montserrat( // Montserrat font
-                              fontSize: isMobile ? 16 : 18,
-                              fontWeight: FontWeight.bold,
+                            child: OutlinedButton(
+                              onPressed: _signInWithGoogle,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.textDark,
+                                backgroundColor: Colors.white,
+                                side: const BorderSide(color: AppColors.dividerColor, width: 1.0),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: isMobile ? 12 : 15,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: AppBorderRadius.small,
+                                ),
+                                elevation: 2,
+                                shadowColor: Colors.black.withOpacity(0.1),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min, // Essential for snug fit
+                                children: [
+                                  Image.asset(
+                                    'assets/images/google_logo.png', // Double check this path!
+                                    height: 24.0, // Fixed height for the logo
+                                    width: 24.0,  // Fixed width for the logo
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print('Error loading Google logo: $error');
+                                      return const Icon(Icons.error_outline, color: Colors.red); // Show an error icon
+                                    },
+                                  ),
+                                  const SizedBox(width: 10), // Space between logo and text
+                                  Text(
+                                    'Sign in with Google',
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: isMobile ? 16 : 18,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
+                        const SizedBox(height: 20), // Spacing after the Google button
                       ],
                     ),
                   ),

@@ -9,10 +9,10 @@ class AppNavigationScreen extends StatefulWidget {
   const AppNavigationScreen({super.key});
 
   @override
-  State<AppNavigationScreen> createState() => _AppNavigationScreenState();
+  State<AppNavigationScreen> createState() => AppNavigationScreenState();
 }
 
-class _AppNavigationScreenState extends State<AppNavigationScreen> {
+class AppNavigationScreenState extends State<AppNavigationScreen> {
   int _selectedIndex = 0; // Index of the currently selected tab
 
   // List of widgets (pages) to display in the navigation bar
@@ -23,7 +23,7 @@ class _AppNavigationScreenState extends State<AppNavigationScreen> {
   ];
 
   // Function to handle tab selection
-  void _onItemTapped(int index) {
+  void onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });

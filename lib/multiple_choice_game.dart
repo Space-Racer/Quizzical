@@ -72,7 +72,8 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
   int _xp = 0;
 
   Timer? _gameTimer;
-  int _timeLeftInSeconds = 10; // Changed to 10 seconds as per HTML mockup timer
+  int _timeLeftInSeconds = 10;
+  int _timerDuration = 10;
 
   bool _gameEnded = false;
   bool _isLoadingQuestions = true;
@@ -106,7 +107,7 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
   }
 
   void _startTimer() {
-    _timeLeftInSeconds = 10; // Reset timer for each question
+    _timeLeftInSeconds = _timerDuration; // Reset timer for each question
     _gameTimer?.cancel();
     _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timeLeftInSeconds > 0) {
@@ -152,7 +153,8 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
           setState(() {
             _reviewModeEnabled = settingsDoc.data()?['review'] ?? false;
             final confettiEnabled = settingsDoc.data()?['confetti'] ?? true;
-            _timeLeftInSeconds = settingsDoc.data()?['timerDuration'] ?? 10;
+            _timerDuration = settingsDoc.data()?['timerDuration'] ?? 10;
+            _timeLeftInSeconds = _timerDuration;
             if (!confettiEnabled) {
               _confettiController.stop();
             }
@@ -218,7 +220,7 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
         _currentQuestion!.answers.shuffle();
         _selectedAnswer = null;
         _answerSubmitted = false;
-        _timeLeftInSeconds = 10;
+        _timeLeftInSeconds = _timerDuration;
       });
       _currentQuestionIndex++;
       _startTimer();
@@ -334,7 +336,7 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
       _gameEnded = false;
       _isLoadingQuestions = true;
       _currentQuestionIndex = 0;
-      _timeLeftInSeconds = 10; // Reset timer display
+      _timeLeftInSeconds = _timerDuration; // Reset timer display
     });
     _gameTimer?.cancel();
     _loadUserData();

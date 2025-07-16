@@ -8,13 +8,15 @@ class AppColors {
   static const Color secondaryPurple = Color(0xFF8B5FBF); // Lighter Purple
   static const Color accentPink = Color(0xFFF72585); // Vibrant Pink
   static const Color accentGreen = Color(0xFF2ecc71); // Success Green
-  static const Color accentRed = Color(0xFFe74c3c); // Error Red
+  static const Color accentRed = Color(0xFFe74c3c);
+  static const Color accentOrange = Color(0xffea853e);
   static const Color backgroundGradientStart = Color(0xFFD8BFD8); // Light Plum
   static const Color backgroundGradientEnd = Color(0xFFBA55D3); // Medium Orchid
   static const Color textDark = Color(0xFF333333); // Dark text
   static const Color textLight = Color(0xFFF9F9F9); // Light text
   static const Color cardBackground = Color(0xF2FFFFFF); // rgba(255, 255, 255, 0.95)
   static const Color googleBlue = Color(0xFF4285F4); // Google Blue
+  static const Color dividerColor = Color(0xFFE0E0E0); // A light grey, common for dividers/borders
 }
 
 // Define common border radii

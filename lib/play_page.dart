@@ -6,8 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:quizzical/multiple_choice_game.dart';
 import 'package:quizzical/flashcards_game.dart';
-import 'package:quizzical/create_page.dart'; // Import the QuestionSetsScreen
-// Removed imports for settings_page.dart and google_nav_bar.dart as they are not used here anymore
+import 'package:quizzical/create_page.dart';
+import 'package:quizzical/app_navigation.dart';
 
 class PlayPage extends StatelessWidget { // Changed back to StatelessWidget
   const PlayPage({super.key});
@@ -116,14 +116,8 @@ class PlayPage extends StatelessWidget { // Changed back to StatelessWidget
                   SizedBox(height: isMobile ? 30 : 50),
                   ElevatedButton.icon(
                     onPressed: () {
-                      // Navigate to QuestionSetsScreen and tell it to open in create mode
-                      // This navigation should ideally be handled by the parent AppNavigationScreen
-                      // if this page is a direct tab.
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const CreatePage(),
-                        ),
-                      );
+                      final navState = context.findAncestorStateOfType<AppNavigationScreenState>();
+                      navState?.onItemTapped(1);
                     },
                     icon: Icon(
                       Icons.add_circle_outline, // Fun icon

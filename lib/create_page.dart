@@ -287,19 +287,14 @@ class _CreatePageState extends State<CreatePage> {
               elevation: 3,
               child: InkWell(
                 onTap: () {
-                  if (setType == 'Flashcard') {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => FlashcardsGamePage(setId: setId),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AddRemoveQuestionsScreen(
+                        isFlashcard: setType == 'Flashcards',
+                        setId: setId,
                       ),
-                    );
-                  } else if (setType == 'Multiple Choice') {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => QuizPage(setId: setId),
-                      ),
-                    );
-                  }
+                    ),
+                  );
                 },
                 child: Container(
                   height: isMobile ? null : 100,
@@ -348,13 +343,20 @@ class _CreatePageState extends State<CreatePage> {
                           IconButton(
                             icon: const Icon(Icons.edit, color: AppColors.primaryBlue),
                             onPressed: () {
-                              // TODO: Navigate to edit set page
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => AddRemoveQuestionsScreen(
+                                    isFlashcard: setType == 'Flashcards',
+                                    setId: setId,
+                                  ),
+                                ),
+                              );
                             },
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete, color: AppColors.accentRed),
                             onPressed: () {
-                              // TODO: Implement delete set functionality
+                              _deleteSet(context, setId);
                             },
                           ),
                         ],
@@ -390,4 +392,41 @@ class BackgroundPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
   }
+}
+
+void _deleteSet(BuildContext context, String setId) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Delete Set'),
+        content: const Text('Are you sure you want to delete this set? This will also delete all questions in this set.'),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: const Text('Delete'),
+            onPressed: () async {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null) {
+                await FirebaseFirestore.instance
+                    .collection('artifacts')
+                    .doc('my-trivia-app-id')
+                    .collection('users')
+                    .doc(user.uid)
+                    .collection('question_sets')
+                    .doc(setId)
+                    .delete();
+              }
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
 }

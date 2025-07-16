@@ -29,6 +29,7 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
 
   int? _correctOptionIndex;
   String? _currentSetId;
+  String? _editingQuestionId;
   List<Map<String, dynamic>> _questions = [];
 
   @override
@@ -125,7 +126,7 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
     });
   }
 
-  void _addQuestion() async {
+  void _addOrUpdateQuestion() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       _showSnackBar('Please log in to add questions.', isError: true);
@@ -136,35 +137,35 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
       await _createOrUpdateSet();
     }
 
-    if (_currentSetId == null) {
-      return;
-    }
+    if (_currentSetId == null) return;
+
+    final collectionRef = FirebaseFirestore.instance
+        .collection('artifacts')
+        .doc('my-trivia-app-id')
+        .collection('users')
+        .doc(user.uid)
+        .collection('question_sets')
+        .doc(_currentSetId)
+        .collection('questions');
 
     if (widget.isFlashcard) {
       final front = _frontController.text.trim();
       final back = _backController.text.trim();
 
       if (front.isEmpty || back.isEmpty) {
-        _showSnackBar('Please fill in both the front and back of the flashcard.',
-            isError: true);
+        _showSnackBar('Please fill in both the front and back of the flashcard.', isError: true);
         return;
       }
 
-      await FirebaseFirestore.instance
-          .collection('artifacts')
-          .doc('my-trivia-app-id')
-          .collection('users')
-          .doc(user.uid)
-          .collection('question_sets')
-          .doc(_currentSetId)
-          .collection('questions')
-          .add({
-        'front': front,
-        'back': back,
-      });
+      final data = {'front': front, 'back': back};
 
-      _frontController.clear();
-      _backController.clear();
+      if (_editingQuestionId != null) {
+        await collectionRef.doc(_editingQuestionId).update(data);
+        _showSnackBar('Flashcard updated successfully!');
+      } else {
+        await collectionRef.add(data);
+        _showSnackBar('Flashcard added successfully!');
+      }
     } else {
       final questionText = _questionTextController.text.trim();
       final options = [
@@ -174,70 +175,62 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
         _option4Controller.text.trim(),
       ];
 
-      if (questionText.isEmpty ||
-          options.any((opt) => opt.isEmpty) ||
-          _correctOptionIndex == null) {
-        _showSnackBar(
-            'Please fill in all fields and select the correct answer.',
-            isError: true);
+      if (questionText.isEmpty || options.any((opt) => opt.isEmpty) || _correctOptionIndex == null) {
+        _showSnackBar('Please fill in all fields and select the correct answer.', isError: true);
         return;
       }
 
       final correctAnswer = options[_correctOptionIndex!];
-
-      await FirebaseFirestore.instance
-          .collection('artifacts')
-          .doc('my-trivia-app-id')
-          .collection('users')
-          .doc(user.uid)
-          .collection('question_sets')
-          .doc(_currentSetId)
-          .collection('questions')
-          .add({
+      final data = {
         'questionText': questionText,
         'options': options,
         'correctAnswer': correctAnswer,
-      });
+      };
 
-      _questionTextController.clear();
-      _option1Controller.clear();
-      _option2Controller.clear();
-      _option3Controller.clear();
-      _option4Controller.clear();
-      setState(() {
-        _correctOptionIndex = null;
-      });
+      if (_editingQuestionId != null) {
+        await collectionRef.doc(_editingQuestionId).update(data);
+        _showSnackBar('Question updated successfully!');
+      } else {
+        await collectionRef.add(data);
+        _showSnackBar('Question added successfully!');
+      }
     }
 
-    _showSnackBar('Question added successfully!');
-    _fetchQuestions(); // Refresh the list of questions
+    _clearForm();
+    _fetchQuestions();
   }
 
-  // --- Add the _editQuestion method here ---
+  void _clearForm() {
+    _questionTextController.clear();
+    _option1Controller.clear();
+    _option2Controller.clear();
+    _option3Controller.clear();
+    _option4Controller.clear();
+    _frontController.clear();
+    _backController.clear();
+    setState(() {
+      _correctOptionIndex = null;
+      _editingQuestionId = null;
+    });
+  }
+
   void _editQuestion(Map<String, dynamic> question) {
-    // You'll need to implement the logic to pre-fill the form with
-    // the question data and allow the user to modify it.
-    // For example, you might open a dialog or navigate to a new screen.
-    // After editing, you would call Firebase to update the question.
-    _showSnackBar('Edit functionality not yet implemented for this question.');
-    print('Attempting to edit question: $question');
-    // Example: if you want to set the text fields for editing
-    if (widget.isFlashcard) {
-      _frontController.text = question['front'];
-      _backController.text = question['back'];
-    } else {
-      _questionTextController.text = question['questionText'];
-      _option1Controller.text = question['options'][0];
-      _option2Controller.text = question['options'][1];
-      _option3Controller.text = question['options'][2];
-      _option4Controller.text = question['options'][3];
-      // Find the index of the correct answer from options and set _correctOptionIndex
-      final List<dynamic> options = question['options'];
-      final String correctAnswer = question['correctAnswer'];
-      setState(() {
+    setState(() {
+      _editingQuestionId = question['id'];
+      if (widget.isFlashcard) {
+        _frontController.text = question['front'];
+        _backController.text = question['back'];
+      } else {
+        _questionTextController.text = question['questionText'];
+        _option1Controller.text = question['options'][0];
+        _option2Controller.text = question['options'][1];
+        _option3Controller.text = question['options'][2];
+        _option4Controller.text = question['options'][3];
+        final List<dynamic> options = question['options'];
+        final String correctAnswer = question['correctAnswer'];
         _correctOptionIndex = options.indexOf(correctAnswer);
-      });
-    }
+      }
+    });
   }
 
   // --- Add the _deleteQuestion method here ---
@@ -423,9 +416,20 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
         decoration: const InputDecoration(labelText: 'Back of Card'),
       ),
       SizedBox(height: isMobile ? 15 : 20),
-      ElevatedButton(
-        onPressed: _addQuestion,
-        child: const Text('Add Flashcard'),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (_editingQuestionId != null)
+            TextButton(
+              onPressed: _clearForm,
+              child: const Text('Cancel'),
+            ),
+          SizedBox(width: 10),
+          ElevatedButton(
+            onPressed: _addOrUpdateQuestion,
+            child: Text(_editingQuestionId != null ? 'Save Question' : 'Add Flashcard'),
+          ),
+        ],
       ),
     ];
   }
@@ -452,9 +456,20 @@ class _AddRemoveQuestionsScreenState extends State<AddRemoveQuestionsScreen> {
         );
       }),
       SizedBox(height: isMobile ? 15 : 20),
-      ElevatedButton(
-        onPressed: _addQuestion,
-        child: const Text('Add Multiple Choice Question'),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (_editingQuestionId != null)
+            TextButton(
+              onPressed: _clearForm,
+              child: const Text('Cancel'),
+            ),
+          SizedBox(width: 10),
+          ElevatedButton(
+            onPressed: _addOrUpdateQuestion,
+            child: Text(_editingQuestionId != null ? 'Save Question' : 'Add Multiple Choice Question'),
+          ),
+        ],
       ),
     ];
   }
