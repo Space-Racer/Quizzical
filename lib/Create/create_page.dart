@@ -1,12 +1,10 @@
 // lib/question_sets_page.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:quizzical/app_theme.dart';
+import 'package:quizzical/utilities/app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:quizzical/flashcards_game.dart'; // Import for navigation to flashcards
-import 'package:quizzical/multiple_choice_game.dart'; // Import for navigation to quiz game
-import 'package:quizzical/add_question_page.dart'; // Required for set creation options
+import 'package:quizzical/Create/add_question_page.dart'; // Required for set creation options
 
 class CreatePage extends StatefulWidget {
   const CreatePage({super.key});

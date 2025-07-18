@@ -1,9 +1,9 @@
 // lib/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:quizzical/app_theme.dart'; // Import app theme for colors
+import 'package:quizzical/utilities/app_theme.dart'; // Import app theme for colors
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:quizzical/auth_screen.dart';
+import 'package:quizzical/others/auth_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SettingsScreen extends StatefulWidget {

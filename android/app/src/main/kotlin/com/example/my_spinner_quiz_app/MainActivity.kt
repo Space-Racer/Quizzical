@@ -1,4 +1,4 @@
-package com.example.my_spinner_quiz_app
+package com.coolbeanstech.quizzical
 
 import io.flutter.embedding.android.FlutterActivity
 

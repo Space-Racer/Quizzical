@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart'; // Ensure this is imported
-import 'package:quizzical/app_navigation.dart'; // Assuming this exists
-import 'package:quizzical/background_painter.dart'; // Import the background painter
-import 'package:quizzical/app_theme.dart'; // Import app theme for colors
+import 'package:quizzical/utilities/app_navigation.dart'; // Assuming this exists
+import 'package:quizzical/utilities/background_painter.dart'; // Import the background painter
+import 'package:quizzical/utilities/app_theme.dart'; // Import app theme for colors
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthScreen extends StatefulWidget {

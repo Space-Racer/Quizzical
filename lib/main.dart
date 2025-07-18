@@ -1,9 +1,9 @@
 // main.dart
 import 'package:flutter/material.dart';
-import 'package:quizzical/auth_screen.dart';
-import 'package:quizzical/app_theme.dart';
+import 'package:quizzical/others/auth_screen.dart';
+import 'package:quizzical/utilities/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:quizzical/firebase_options.dart';
+import 'package:quizzical/utilities/firebase_options.dart';
 
 // Global variables related to Canvas environment (kept as placeholders but not used for Firebase)
 // DO NOT modify these. They are injected at runtime.
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
       title: 'Quizzical',
       theme: appTheme, // Apply the custom theme
       home:
-      const AuthScreen(), // Directly show AuthScreen
+      const AuthScreen(), //TODO: Replace with AuthScreen()
     );
   }
 }

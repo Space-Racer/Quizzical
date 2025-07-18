@@ -1,11 +1,11 @@
 name: quizzical
-description: A fun spinner quiz app for the web.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+description: Your Fun Study Tool.
+publish_to: 'none'
 
 version: 2.4.9+8
 
 environment:
-  sdk: '>=3.0.0 <4.0.0' # Ensures compatibility with the latest Dart SDK
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -15,30 +15,39 @@ dependencies:
   firebase_core: ^2.27.0
   cloud_firestore: ^4.17.2
   firebase_auth: ^4.19.4
-  flutter_fortune_wheel: ^1.3.0 # For a more advanced spinner
-  google_fonts: ^6.2.1 # Add this for custom fonts
-  confetti: ^0.7.0 # Add this for confetti animation
+  google_sign_in: ^6.2.1
+  flutter_fortune_wheel: ^1.3.0
+  google_fonts: ^6.2.1
+  confetti: ^0.7.0
   audioplayers: ^5.2.0
   vibration: ^1.7.7
   google_nav_bar: ^5.0.6
   flutter_animate: ^4.2.0
-  google_sign_in: ^6.2.1 # Add this line
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   assets:
     - assets/audio/
     - assets/images/
+    - assets/app_icon_foreground.png # Make sure you list your foreground image in assets
 
-  # To add assets like images or fonts:
-  # assets:
-  #   - assets/images/
-  # fonts:
-  #   - family: Pacifico
-  #     fonts:
-  #       - asset: fonts/Pacifico-Regular.ttf
+# Flutter Launcher Icons configuration for ADAPTIVE ICONS
+flutter_launcher_icons:
+  android: true # This tells the package to generate Android icons.
+  ios: true # Set to true if you also want to generate regular iOS icons.
+  image_path: "assets/app_icon.png" # This is a fallback/default for non-adaptive contexts (like iOS) or older Android versions.
+  # You can point it to a combined version of your logo or the foreground.
+  adaptive_icon_background: "#F8F0E5" # Replace with your desired background color (e.g., white, blue, etc.)
+  adaptive_icon_foreground: "assets/app_icon_foreground.png" # Path to your transparent foreground image.
+  # Optional: For Web platform
+  web:
+    generate: true
+    image_path: "assets/app_icon_foreground.png" # Use your foreground for web
+    background_color: "#F8F0E5" # Match your adaptive background color
+    theme_color: "#F8F0E5" # Match your adaptive background color

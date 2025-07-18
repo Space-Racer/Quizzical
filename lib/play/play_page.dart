@@ -1,13 +1,12 @@
 // lib/select_set_page.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:quizzical/app_theme.dart';
+import 'package:quizzical/utilities/app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:quizzical/multiple_choice_game.dart';
-import 'package:quizzical/flashcards_game.dart';
-import 'package:quizzical/create_page.dart';
-import 'package:quizzical/app_navigation.dart';
+import 'package:quizzical/play/multiple_choice_game.dart';
+import 'package:quizzical/play/flashcards_game.dart';
+import 'package:quizzical/utilities/app_navigation.dart';
 
 class PlayPage extends StatelessWidget { // Changed back to StatelessWidget
   const PlayPage({super.key});

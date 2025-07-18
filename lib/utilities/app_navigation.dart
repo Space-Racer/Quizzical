@@ -1,8 +1,8 @@
 // lib/app_navigation.dart
 import 'package:flutter/material.dart';
-import 'package:quizzical/create_page.dart'; // Import the new question sets page
-import 'package:quizzical/play_page.dart';
-import 'package:quizzical/settings_page.dart'; // Import the new settings page
+import 'package:quizzical/Create/create_page.dart'; // Import the new question sets page
+import 'package:quizzical/play/play_page.dart';
+import 'package:quizzical/others/settings_page.dart'; // Import the new settings page
 import 'package:google_nav_bar/google_nav_bar.dart';
 
 class AppNavigationScreen extends StatefulWidget {
