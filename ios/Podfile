@@ -5,12 +5,17 @@ platform :ios, '13.0' # Or '14.0' if your app needs it or you prefer newer APIs
 # If you don't want CocoaPods to send analytics, uncomment this line:
 # ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# Determine Flutter's root directory from where its podhelper.rb script can be loaded.
+# This part is CRITICAL for 'flutter_install_all_ios_pods' to be defined.
+flutter_application_path = File.dirname(File.realpath(__FILE__)) + '/..'
+load File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb') # THIS IS THE KEY LINE
+
 target 'Runner' do
   use_frameworks!
-  # Enables iOS plugins.
-  # Do not specify an explicit version for Flutter's CocoaPods plugin.
-  plugin 'flutter_install_all_ios_pods'
+  # Use modular headers for CocoaPods to avoid conflicts (often useful)
+  use_modular_headers!
 
+  # Flutter Pods - This method is now defined because of the 'load' line above.
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
   # Add any custom CocoaPods dependencies below this line if needed
