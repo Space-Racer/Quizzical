@@ -1,13 +1,27 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '14.0' # Set your minimum iOS deployment target here
+platform :ios, '13.0' # Or '14.0' if your app needs it or you prefer newer APIs
+
+# CocoaPods analytics.
+# If you don't want CocoaPods to send analytics, uncomment this line:
+# ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 target 'Runner' do
-  # Flutter Pods
-  # Don't change this line; Flutter will manage its plugins here.
+  use_frameworks!
+  # Enables iOS plugins.
+  # Do not specify an explicit version for Flutter's CocoaPods plugin.
+  plugin 'flutter_install_all_ios_pods'
+
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
   # Add any custom CocoaPods dependencies below this line if needed
-  # For example, if you have very specific Firebase versions you want to pin:
-  # pod 'Firebase/CoreOnly', '10.25.0'
-  # pod 'GoogleSignIn', '8.0.0'
+  # For example:
+  # pod 'SomeThirdPartySDK', '~> 1.0'
+
+end
+
+# Post-install hook to ensure Pods use specific compiler flags (important for some plugins)
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+  end
 end
