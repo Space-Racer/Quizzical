@@ -38,6 +38,7 @@ flutter:
     - assets/app_icon_foreground.png # Make sure you list your foreground image in assets
 
 # Flutter Launcher Icons configuration for ADAPTIVE ICONS
+# flutter pub run flutter_launcher_icons:main
 flutter_launcher_icons:
   android: true # This tells the package to generate Android icons.
   ios: true # Set to true if you also want to generate regular iOS icons.

@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>My Spinner Quiz App</string>
+	<string>Quizzical</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -45,18 +45,5 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.967907547898-2hiqvkgk5gmmp90kabubo2ho93c8153u</string>
-			</array>
-		</dict>
-	</array>
-	<key>GIDClientID</key>
-	<string>967907547898-2hiqvkgk5gmmp90kabubo2ho93c8153u.apps.googleusercontent.com</string>
 </dict>
 </plist>
