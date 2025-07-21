@@ -201,7 +201,9 @@ class _FlashcardsGamePageState extends State<FlashcardsGamePage>
     final isMobile = screenWidth < 768;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // The Scaffold's background is now the gradient
+      backgroundColor: Colors.transparent, // Keep this transparent
+      extendBodyBehindAppBar: true, // This is key! It allows the body to extend behind the AppBar.
       appBar: AppBar(
         title: Text(
           'Flashcards',
@@ -210,11 +212,14 @@ class _FlashcardsGamePageState extends State<FlashcardsGamePage>
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.transparent, // Keep this transparent
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.primaryBlue),
       ),
       body: Container(
+        // This container now defines the full background
+        width: double.infinity, // Ensure it takes full width
+        height: double.infinity, // Ensure it takes full height
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

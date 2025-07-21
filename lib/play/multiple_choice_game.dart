@@ -1,12 +1,12 @@
 // lib/quiz_game.dart
 import 'package:flutter/material.dart';
-import 'dart:math'; // Still needed for random question selection
-import 'dart:async'; // Still needed for game timer
+import 'dart:math';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_fonts/google_fonts.dart'; // Import for Google Fonts
-import 'package:confetti/confetti.dart'; // Keep if you want confetti
-import 'package:audioplayers/audioplayers.dart'; // Keep if you want sound effects
+import 'package:google_fonts/google_fonts.dart';
+import 'package:confetti/confetti.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:vibration/vibration.dart';
 
 // Re-using BackgroundPainter as it's a simple, abstract background
@@ -61,7 +61,8 @@ class QuizPage extends StatefulWidget {
   State<QuizPage> createState() => _QuizPageState();
 }
 
-class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderStateMixin
+class _QuizPageState extends State<QuizPage> {
+  // Removed SingleTickerProviderStateMixin
   int _score = 0;
   List<Question> _allQuestions = [];
   Question? _currentQuestion;
@@ -88,7 +89,8 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 1));
     _correctAudioPlayer = AudioPlayer();
     _incorrectAudioPlayer = AudioPlayer();
     _loadAudio();
@@ -102,7 +104,8 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
       _correctAudioPlayer.setSource(AssetSource('audio/correct.mp3'));
       _incorrectAudioPlayer.setSource(AssetSource('audio/incorrect.mp3'));
     } catch (e) {
-      print("Error loading audio: $e. Make sure assets are correctly configured in pubspec.yaml");
+      print(
+          "Error loading audio: $e. Make sure assets are correctly configured in pubspec.yaml");
     }
   }
 
@@ -224,7 +227,9 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
       });
       _currentQuestionIndex++;
       _startTimer();
-    } else if (_reviewModeEnabled && _incorrectQuestions.isNotEmpty && !_isReviewSession) {
+    } else if (_reviewModeEnabled &&
+        _incorrectQuestions.isNotEmpty &&
+        !_isReviewSession) {
       _startReviewSession();
     } else {
       setState(() {
@@ -380,29 +385,37 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
           title: Text(
             'Game Over!',
-            style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.error, fontWeight: FontWeight.bold, fontSize: 28),
+            style: GoogleFonts.poppins(
+                color: Theme.of(context).colorScheme.error,
+                fontWeight: FontWeight.bold,
+                fontSize: 28),
             textAlign: TextAlign.center,
           ),
           content: Text(
             'Your final score is: $_score points!',
-            style: GoogleFonts.poppins(fontSize: 20.0, color: Theme.of(context).colorScheme.onSurface),
+            style: GoogleFonts.poppins(
+                fontSize: 20.0, color: Theme.of(context).colorScheme.onSurface),
             textAlign: TextAlign.center,
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: <Widget>[
             ElevatedButton(
-              child: Text('Play Again', style: Theme.of(context).textTheme.labelLarge),
+              child: Text('Play Again',
+                  style: Theme.of(context).textTheme.labelLarge),
               onPressed: () {
                 Navigator.of(context).pop();
                 _resetGame();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.secondary,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0)),
               ),
             ),
           ],
@@ -434,19 +447,33 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
     final Color accentPink = Theme.of(context).colorScheme.secondary;
     final Color cardWhite = Theme.of(context).colorScheme.surface;
     final Color textWhite = Theme.of(context).colorScheme.onPrimary;
-    final Color textDark = Theme.of(context).colorScheme.onSurface;
     final Color successGreen = const Color(0xFF2ECC71); // Define success green
     final Color errorRed = Theme.of(context).colorScheme.error; // Define error red
 
-    final bool showQuestionContent = _currentQuestion != null && !_isLoadingQuestions;
+    final bool showQuestionContent =
+        _currentQuestion != null && !_isLoadingQuestions;
+
+    // Determine if it's a mobile layout
+    final bool isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
       backgroundColor: Colors.transparent, // Allow gradient from parent
+      // Extend body behind app bar to make the gradient continuous
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text(''),
+        title: Text(
+          'Multiple Choice',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+            color: primaryPurpleDark, // Set title color to primaryPurpleDark
+          ),
+        ),
+        centerTitle: true,
+        // Set app bar background to transparent to show the body gradient
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+        elevation: 0, // No shadow for a flat look
+        iconTheme: IconThemeData(color: primaryPurpleDark), // Back button color to primaryPurpleDark
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -459,221 +486,254 @@ class _QuizPageState extends State<QuizPage> { // Removed SingleTickerProviderSt
             ],
           ),
         ),
-        child: Stack(
-          children: [
-            // BackgroundPainter for the subtle circles (if still desired)
-            Positioned.fill(
-              child: CustomPaint(
-                painter: BackgroundPainter(),
-              ),
-            ),
-            Center(
-              child: Container(
-                margin: const EdgeInsets.all(20.0), // Margin around the main white card
-                padding: const EdgeInsets.all(25.0), // Padding inside the main white card
-                decoration: BoxDecoration(
-                  color: cardWhite,
-                  borderRadius: BorderRadius.circular(30.0), // Large border radius for the main card
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15), // Subtle shadow
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+        child: SafeArea( // Ensures content is below the AppBar, especially on web/desktop
+          child: Stack(
+            children: [
+              // BackgroundPainter for the subtle circles (if still desired)
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: BackgroundPainter(),
                 ),
-                constraints: const BoxConstraints(maxWidth: 600), // Max width for the card
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, // Wrap content
-                  children: <Widget>[
-                    // Top Row: User Info and Timer (instead of Question Number)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 15.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // User Info
-                          Row(
-                            children: [
-                              Text(
-                                'Hi, $_displayName!',
-                                style: GoogleFonts.poppins(fontSize: 18, color: primaryPurpleDark, fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(width: 10),
-                              // Highlighted XP text
-                              Text(
-                                'XP: $_xp',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 18, // Slightly larger font size
-                                  color: Colors.amber[700], // Golden color
-                                  fontWeight: FontWeight.bold, // Make it bolder
-                                ),
-                              ),
-                            ],
-                          ),
-                          // Timer Container
-                          Container(
-                            width: 60, // Smaller timer circle
-                            height: 60,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: secondaryPurpleMedium, // Solid purple background
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Stack(
-                                alignment: Alignment.center,
+              ),
+              Center(
+                child: Container(
+                  margin: EdgeInsets.all(isMobile ? 15.0 : 20.0), // Adjust margin for mobile
+                  padding: EdgeInsets.all(isMobile ? 20.0 : 25.0), // Adjust padding for mobile
+                  decoration: BoxDecoration(
+                    color: cardWhite,
+                    borderRadius: BorderRadius.circular(
+                        isMobile ? 20.0 : 30.0), // Adjust border radius for mobile
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15), // Subtle shadow
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  constraints: const BoxConstraints(maxWidth: 600), // Max width for the card
+                  child: Column(
+                    mainAxisSize: isMobile ? MainAxisSize.min : MainAxisSize.max, // Control height based on mobile
+                    children: <Widget>[
+                      // Top Row: User Info and Timer (instead of Question Number)
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: isMobile ? 5.0 : 10.0,
+                            vertical: isMobile ? 10.0 : 15.0), // Adjust padding for mobile
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // User Info
+                            Flexible( // Use Flexible to prevent overflow on smaller screens
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min, // Shrink to fit content
                                 children: [
-                                  SizedBox(
-                                    width: 60,
-                                    height: 60,
-                                    child: CircularProgressIndicator(
-                                      value: _timeLeftInSeconds / 10, // Progress from 1.0 to 0.0 for 10 seconds
-                                      valueColor: AlwaysStoppedAnimation<Color>(textWhite.withOpacity(0.5)),
-                                      backgroundColor: Colors.transparent,
-                                      strokeWidth: 4,
-                                    ),
-                                  ),
                                   Text(
-                                    _formatTime(_timeLeftInSeconds),
-                                    style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: textWhite),
+                                    'Hi, $_displayName!',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: isMobile ? 16 : 18, // Smaller font for mobile
+                                        color: primaryPurpleDark,
+                                        fontWeight: FontWeight.w600),
+                                    overflow: TextOverflow.ellipsis, // Handle overflow
+                                  ),
+                                  SizedBox(width: isMobile ? 5 : 10), // Smaller gap for mobile
+                                  // Highlighted XP text
+                                  Text(
+                                    'XP: $_xp',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: isMobile ? 16 : 18, // Smaller font for mobile
+                                      color: Colors.amber[700], // Golden color
+                                      fontWeight: FontWeight.bold, // Make it bolder
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-
-                    // Question Card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(30.0),
-                      decoration: BoxDecoration(
-                        color: primaryPurpleDark, // Dark purple background
-                        borderRadius: BorderRadius.circular(20.0), // Rounded corners
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: _isLoadingQuestions
-                            ? CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(textWhite))
-                            : Text(
-                          _currentQuestion?.questionText ?? 'Loading Question...',
-                          style: GoogleFonts.poppins(fontSize: 22, color: textWhite, fontWeight: FontWeight.w600),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-
-                    // Answer Buttons Grid
-                    if (showQuestionContent && _currentQuestion!.answers.isNotEmpty)
-                      Flexible( // Flexible wraps only the GridView.builder
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            // Calculate available height for the GridView
-                            final double availableHeight = constraints.maxHeight;
-                            // Assuming 2 rows for 4 answers, and 15.0 mainAxisSpacing
-                            // We want (2 * itemHeight) + mainAxisSpacing to fit within availableHeight
-                            // itemHeight = (availableHeight - mainAxisSpacing) / 2
-                            // childAspectRatio = itemWidth / itemHeight
-                            // itemWidth = (constraints.maxWidth - crossAxisSpacing) / 2
-
-                            final double crossAxisSpacing = 15.0;
-                            final double mainAxisSpacing = 15.0;
-                            final double itemWidth = (constraints.maxWidth - crossAxisSpacing) / 2;
-
-                            double calculatedChildAspectRatio = 2.5; // Default value
-
-                            if (availableHeight > 0) {
-                              // Calculate the target item height to fit 2 rows
-                              final double targetItemHeight = (availableHeight - mainAxisSpacing) / 2;
-                              if (targetItemHeight > 0 && itemWidth > 0) {
-                                calculatedChildAspectRatio = itemWidth / targetItemHeight;
-                                // Add a small buffer or cap to avoid extremely wide/short buttons
-                                if (calculatedChildAspectRatio < 1.0) calculatedChildAspectRatio = 1.0; // Prevent very tall buttons
-                                if (calculatedChildAspectRatio > 5.0) calculatedChildAspectRatio = 5.0; // Prevent very short buttons
-                              }
-                            }
-
-                            return GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: crossAxisSpacing,
-                                mainAxisSpacing: mainAxisSpacing,
-                                childAspectRatio: calculatedChildAspectRatio, // Use calculated aspect ratio
+                            // Timer Container
+                            Container(
+                              width: isMobile ? 50 : 60, // Smaller timer circle for mobile
+                              height: isMobile ? 50 : 60,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: secondaryPurpleMedium, // Solid purple background
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
                               ),
-                              itemCount: _currentQuestion!.answers.length,
-                              itemBuilder: (context, index) {
-                                final answer = _currentQuestion!.answers[index];
-                                return AnswerButton(
-                                  answerText: answer,
-                                  isSelected: _selectedAnswer == answer,
-                                  isCorrect: _answerSubmitted && answer == _currentQuestion!.correctAnswer,
-                                  isIncorrect: _answerSubmitted && _selectedAnswer == answer && answer != _currentQuestion!.correctAnswer,
-                                  onTap: _answerSubmitted || _gameEnded ? null : () => _selectAnswer(answer),
-                                  primaryPurpleDark: primaryPurpleDark,
-                                  secondaryPurpleMedium: secondaryPurpleMedium,
-                                  textWhite: textWhite,
-                                  successGreen: successGreen,
-                                  errorRed: errorRed,
-                                );
-                              },
-                            );
-                          },
+                              child: Center(
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: isMobile ? 50 : 60,
+                                      height: isMobile ? 50 : 60,
+                                      child: CircularProgressIndicator(
+                                        value: _timeLeftInSeconds /
+                                            10, // Progress from 1.0 to 0.0 for 10 seconds
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                            textWhite.withOpacity(0.5)),
+                                        backgroundColor: Colors.transparent,
+                                        strokeWidth: 4,
+                                      ),
+                                    ),
+                                    Text(
+                                      _formatTime(_timeLeftInSeconds),
+                                      style: GoogleFonts.poppins(
+                                          fontSize: isMobile ? 20 : 24, // Smaller font for mobile
+                                          fontWeight: FontWeight.bold,
+                                          color: textWhite),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    const SizedBox(height: 30), // This SizedBox is now a direct child of the Column
+                      SizedBox(height: isMobile ? 15 : 25), // Smaller gap for mobile
 
-                    // Next Question Button (only appears after answer submitted)
-                    if (_answerSubmitted && !_gameEnded)
-                      ElevatedButton(
-                        onPressed: _loadNextQuestion,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryPurpleDark, // Dark purple
-                          foregroundColor: textWhite,
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-                          elevation: 5,
-                          shadowColor: Colors.black.withOpacity(0.15),
+                      // Question Card
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(isMobile ? 20.0 : 30.0), // Adjust padding for mobile
+                        decoration: BoxDecoration(
+                          color: primaryPurpleDark, // Dark purple background
+                          borderRadius:
+                          BorderRadius.circular(isMobile ? 15.0 : 20.0), // Rounded corners
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                         ),
-                        child: Text('Next Question', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
+                        child: Center(
+                          child: _isLoadingQuestions
+                              ? CircularProgressIndicator(
+                              valueColor:
+                              AlwaysStoppedAnimation<Color>(textWhite))
+                              : Text(
+                            _currentQuestion?.questionText ??
+                                'Loading Question...',
+                            style: GoogleFonts.poppins(
+                                fontSize: isMobile ? 18 : 22, // Smaller font for mobile
+                                color: textWhite,
+                                fontWeight: FontWeight.w600),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ),
-                    const SizedBox(height: 10), // Small space at bottom
-                  ],
+                      SizedBox(height: isMobile ? 20 : 30), // Smaller gap for mobile
+
+                      // Answer Buttons Grid
+                      if (showQuestionContent && _currentQuestion!.answers.isNotEmpty)
+                        Expanded( // Use Expanded to fill remaining vertical space
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final double crossAxisSpacing = isMobile ? 10.0 : 15.0;
+                              final double mainAxisSpacing = isMobile ? 10.0 : 15.0;
+                              final double itemWidth = (constraints.maxWidth - crossAxisSpacing) / 2;
+
+                              // Calculate button height dynamically based on available height,
+                              // ensuring a minimum height for "big and fun"
+                              final double availableHeight = constraints.maxHeight;
+                              final int numRows = (_currentQuestion!.answers.length / 2).ceil();
+                              final double totalSpacingHeight = (numRows - 1) * mainAxisSpacing;
+                              // Ensure totalSpacingHeight is not negative for less than 2 rows
+                              final double effectiveTotalSpacingHeight = max(0.0, totalSpacingHeight);
+
+                              final double calculatedButtonHeight = (availableHeight - effectiveTotalSpacingHeight) / numRows;
+
+                              // Ensure a minimum "fun" height, but allow it to grow if space allows
+                              final double minFunButtonHeight = isMobile ? 60.0 : 75.0; // Adjusted for mobile height
+                              final double finalButtonHeight = max(calculatedButtonHeight, minFunButtonHeight);
+
+                              final double calculatedChildAspectRatio = itemWidth / finalButtonHeight;
+
+                              return GridView.builder(
+                                shrinkWrap: true, // Still shrinkWrap, but Expanded will provide constraints
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: crossAxisSpacing,
+                                  mainAxisSpacing: mainAxisSpacing,
+                                  childAspectRatio: calculatedChildAspectRatio,
+                                ),
+                                itemCount: _currentQuestion!.answers.length,
+                                itemBuilder: (context, index) {
+                                  final answer = _currentQuestion!.answers[index];
+                                  return AnswerButton(
+                                    answerText: answer,
+                                    isSelected: _selectedAnswer == answer,
+                                    isCorrect: _answerSubmitted &&
+                                        answer == _currentQuestion!.correctAnswer,
+                                    isIncorrect: _answerSubmitted &&
+                                        _selectedAnswer == answer &&
+                                        answer != _currentQuestion!.correctAnswer,
+                                    onTap: _answerSubmitted || _gameEnded
+                                        ? null
+                                        : () => _selectAnswer(answer),
+                                    primaryPurpleDark: primaryPurpleDark,
+                                    secondaryPurpleMedium: secondaryPurpleMedium,
+                                    textWhite: textWhite,
+                                    successGreen: successGreen,
+                                    errorRed: errorRed,
+                                    isMobile: isMobile, // Pass isMobile to button
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      SizedBox(height: isMobile ? 15 : 30), // Smaller gap before next button/end
+
+                      // Next Question Button (only appears after answer submitted)
+                      if (_answerSubmitted && !_gameEnded)
+                        ElevatedButton(
+                          onPressed: _loadNextQuestion,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryPurpleDark, // Dark purple
+                            foregroundColor: textWhite,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: isMobile ? 25 : 40,
+                                vertical: isMobile ? 10 : 15), // Adjust padding
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius.circular(isMobile ? 12.0 : 15.0)), // Adjust radius
+                            elevation: 5,
+                            shadowColor: Colors.black.withOpacity(0.15),
+                          ),
+                          child: Text('Next Question',
+                              style: GoogleFonts.poppins(
+                                  fontSize: isMobile ? 18 : 20, // Adjust font size
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                      SizedBox(height: isMobile ? 5 : 10), // Even smaller gap at bottom for mobile
+                    ],
+                  ),
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.topCenter,
-              child: ConfettiWidget(
-                confettiController: _confettiController,
-                blastDirection: pi / 2,
-                maxBlastForce: 20,
-                minBlastForce: 8,
-                emissionFrequency: 0.03,
-                numberOfParticles: 20,
-                gravity: 0.3,
-                colors: [accentPink, successGreen, primaryPurpleDark, textWhite],
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confettiController,
+                  blastDirection: pi / 2,
+                  maxBlastForce: 20,
+                  minBlastForce: 8,
+                  emissionFrequency: 0.03,
+                  numberOfParticles: 20,
+                  gravity: 0.3,
+                  colors: [accentPink, successGreen, primaryPurpleDark, textWhite],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -687,6 +747,7 @@ class AnswerButton extends StatelessWidget {
   final bool isCorrect;
   final bool isIncorrect;
   final VoidCallback? onTap;
+  final bool isMobile; // Added to adjust button styling
 
   // Pass theme colors directly for more control within the button
   final Color primaryPurpleDark;
@@ -707,6 +768,7 @@ class AnswerButton extends StatelessWidget {
     required this.textWhite,
     required this.successGreen,
     required this.errorRed,
+    this.isMobile = false, // Default to false for web
   });
 
   @override
@@ -752,18 +814,22 @@ class AnswerButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10), // Adjusted padding for buttons
+        padding: EdgeInsets.symmetric(
+            vertical: isMobile ? 10 : 15,
+            horizontal: isMobile ? 8 : 10), // Adjusted padding for mobile
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(12.0), // Rounded corners for buttons
+          borderRadius:
+          BorderRadius.circular(isMobile ? 10.0 : 12.0), // Rounded corners for buttons
           border: Border.all(color: borderColor, width: 2), // Border for buttons
           boxShadow: shadows,
         ),
-        child: Center( // Center the text within the button
+        child: Center(
+          // Center the text within the button
           child: Text(
             answerText,
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: isMobile ? 16 : 18, // Adjust text size for mobile/web
               fontWeight: FontWeight.w600,
               color: textColor,
             ),
