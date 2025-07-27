@@ -2,10 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart'; // Ensure this is imported
-import 'package:quizzical/utilities/app_navigation.dart'; // Assuming this exists
-import 'package:quizzical/utilities/background_painter.dart'; // Import the background painter
-import 'package:quizzical/utilities/app_theme.dart'; // Import app theme for colors
+import 'package:google_fonts/google_fonts.dart';
+import 'package:quizzical/utilities/app_navigation.dart';
+import 'package:quizzical/utilities/background_painter.dart';
+import 'package:quizzical/utilities/app_theme.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -28,6 +28,9 @@ class _AuthScreenState extends State<AuthScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? _userId;
+
+  // It's good practice to initialize GoogleSignIn instance once
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   @override
   void initState() {
@@ -152,28 +155,39 @@ class _AuthScreenState extends State<AuthScreen> {
     });
 
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      // Use the initialized _googleSignIn instance
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
       if (googleUser == null) {
         // The user canceled the sign-in
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
         return;
       }
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
       final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
+        accessToken: googleAuth.accessToken, // This should now be accessible
         idToken: googleAuth.idToken,
       );
 
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      final User user = userCredential.user!;
+      final User? user = userCredential.user; // User can be null
 
-      if (userCredential.additionalUserInfo!.isNewUser) {
+      if (user == null) {
+        _showSnackBar('Google sign-in failed: User data is null.', isError: true);
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+
+      // Check if it's a new user and create a profile document
+      if (userCredential.additionalUserInfo?.isNewUser == true) {
         await _firestore
             .collection('artifacts')
-            .doc('my-trivia-app-id')
+            .doc('my-trivia-app-id') // Consider making this configurable or a constant
             .collection('users')
             .doc(user.uid)
             .collection('profile')
@@ -193,9 +207,7 @@ class _AuthScreenState extends State<AuthScreen> {
       _showSnackBar('An unexpected error occurred during Google sign-in: $e', isError: true);
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -454,16 +466,14 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
 
                         // *** Google Sign-In ***
-
-
                         const SizedBox(height: 20), // Spacing after the previous button
 
                         _isLoading
-                            ? const CircularProgressIndicator()
-                            : Center( // <--- Use Center to horizontally center the button
-                          child: ConstrainedBox( // <--- Use ConstrainedBox to limit max width
+                            ? const SizedBox.shrink() // Don't show another progress indicator if one is already showing
+                            : Center(
+                          child: ConstrainedBox(
                             constraints: BoxConstraints(
-                              maxWidth: isMobile ? double.infinity : 300, // Full width on mobile, max 300 on desktop
+                              maxWidth: isMobile ? double.infinity : 300,
                             ),
                             child: OutlinedButton(
                               onPressed: _signInWithGoogle,
@@ -483,18 +493,18 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min, // Essential for snug fit
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Image.asset(
-                                    'assets/images/google_logo.png', // Double check this path!
-                                    height: 24.0, // Fixed height for the logo
-                                    width: 24.0,  // Fixed width for the logo
+                                    'assets/images/google_logo.png',
+                                    height: 24.0,
+                                    width: 24.0,
                                     errorBuilder: (context, error, stackTrace) {
                                       print('Error loading Google logo: $error');
-                                      return const Icon(Icons.error_outline, color: Colors.red); // Show an error icon
+                                      return const Icon(Icons.error_outline, color: Colors.red);
                                     },
                                   ),
-                                  const SizedBox(width: 10), // Space between logo and text
+                                  const SizedBox(width: 10),
                                   Text(
                                     'Sign in with Google',
                                     style: GoogleFonts.montserrat(
@@ -508,7 +518,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20), // Spacing after the Google button
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
